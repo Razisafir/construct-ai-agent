@@ -13,7 +13,7 @@ import re
 import time
 import shlex
 import logging
-import asyncio
+import subprocess
 from typing import Dict, List, Optional, Any
 
 logger = logging.getLogger(__name__)
@@ -53,6 +53,32 @@ BLOCKED_COMMANDS: List[str] = [
     "eval $(wget",
     "bash <(curl",
     "bash <(wget",
+    # Additional dangerous commands
+    "reboot",
+    "shutdown",
+    "poweroff",
+    "halt",
+    "init 0",
+    "init 6",
+    "killall",
+    "pkill",
+    "iptables",
+    "nft",
+    "mount",
+    "umount",
+    "losetup",
+    "pvcreate",
+    "pvremove",
+    "vgremove",
+    "lvremove",
+    "fdisk",
+    "parted",
+    "sfdisk",
+    "chroot",
+    "setfacl",
+    "sysctl -w",
+    "echo * > /proc",
+    "echo * > /sys",
 ]
 
 # Command prefixes that are blocked (exact word match)
@@ -63,6 +89,18 @@ BLOCKED_PREFIXES: List[str] = [
     "fdisk",
     "dd",
     "format",
+    "reboot",
+    "shutdown",
+    "poweroff",
+    "halt",
+    "killall",
+    "pkill",
+    "iptables",
+    "nft",
+    "mount",
+    "umount",
+    "losetup",
+    "chroot",
 ]
 
 # Default timeout in seconds
@@ -91,8 +129,8 @@ def _is_command_blocked(command: str) -> Optional[str]:
 
     # Check exact/substring blocked commands
     for blocked in BLOCKED_COMMANDS:
-        # Handle wildcard patterns in blocklist
-        pattern = blocked.lower().replace("*", ".*")
+        # Use re.escape for literal matching, then restore wildcards
+        pattern = re.escape(blocked.lower()).replace(r"\*", ".*")
         if re.search(pattern, lowered):
             return f"Command blocked: matches '{blocked}'"
 
@@ -134,14 +172,80 @@ def _validate_working_dir(cwd: str) -> str:
     expanded = os.path.expanduser(cwd)
     abs_cwd = os.path.abspath(expanded)
 
-    # Allow execution in temp directories and standard project paths
-    # but block system directories
-    system_paths = {"/", "/bin", "/sbin", "/usr", "/lib", "/lib64", "/etc", "/var"}
-    if abs_cwd in system_paths:
-        logger.warning("Working directory '%s' is a system path; using '.'", abs_cwd)
+    # Block system directories and their subdirectories
+    blocked_roots = ["/bin", "/sbin", "/usr", "/lib", "/lib64", "/etc",
+                     "/var", "/proc", "/sys", "/dev", "/boot", "/root"]
+    for blocked in blocked_roots:
+        if abs_cwd == blocked or abs_cwd.startswith(blocked + os.sep):
+            logger.warning(
+                "Working directory '%s' is under blocked system path '%s'; using '.'",
+                abs_cwd, blocked
+            )
+            return os.path.abspath(".")
+
+    # Block raw root and paths with traversal
+    if abs_cwd == "/":
+        logger.warning("Working directory '/' is blocked; using '.'")
         return os.path.abspath(".")
 
+    if ".." in os.path.normpath(expanded).split(os.sep):
+        # Extra check: prevent traversal outside project
+        resolved = os.path.realpath(expanded)
+        base_dir = os.path.abspath(os.getcwd())
+        try:
+            common = os.path.commonpath([base_dir, resolved])
+            if common != base_dir:
+                logger.warning(
+                    "Working directory '%s' resolves outside project; using '.'",
+                    abs_cwd
+                )
+                return os.path.abspath(".")
+        except ValueError:
+            return os.path.abspath(".")
+
     return abs_cwd
+
+
+def _sanitize_command(command: str) -> str:
+    """
+    Sanitize a command string before execution.
+
+    - Strips control characters
+    - Blocks null bytes
+    - Limits command length
+
+    Parameters
+    ----------
+    command:
+        Raw command string.
+
+    Returns
+    -------
+    str
+        Sanitized command string.
+
+    Raises
+    ------
+    ValueError
+        If the command contains dangerous patterns.
+    """
+    # Block null bytes
+    if "\x00" in command:
+        raise ValueError("Command contains null bytes")
+
+    # Strip control characters (except common whitespace)
+    sanitized = "".join(ch for ch in command if ch == "\n" or ch == "\t" or (ch.isprintable() or ch in " \r\n\t"))
+
+    # Limit command length (prevent DoS via huge commands)
+    MAX_COMMAND_LENGTH = 10_000
+    if len(sanitized) > MAX_COMMAND_LENGTH:
+        raise ValueError(f"Command exceeds maximum length of {MAX_COMMAND_LENGTH} characters")
+
+    # Block backtick command substitution (dangerous)
+    if "`" in sanitized:
+        raise ValueError("Backtick command substitution is not allowed")
+
+    return sanitized.strip()
 
 
 # ---------------------------------------------------------------------------
@@ -186,23 +290,71 @@ def execute_command(
             "command": command,
         }
 
-    # Validate timeout
+    # Sanitize command
+    try:
+        command = _sanitize_command(command)
+    except ValueError as exc:
+        logger.warning("Sanitization failed for command: %s — %s", command, exc)
+        return {
+            "success": False,
+            "error": f"Command sanitization failed: {exc}",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": -1,
+            "duration_ms": 0,
+            "command": command,
+        }
+
+    # Validate timeout (reject rather than silently clamp)
     if timeout > MAX_TIMEOUT:
+        logger.warning("Timeout %ds exceeds max %ds; using max", timeout, MAX_TIMEOUT)
         timeout = MAX_TIMEOUT
+    if timeout <= 0:
+        return {
+            "success": False,
+            "error": f"Invalid timeout: {timeout}",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": -1,
+            "duration_ms": 0,
+            "command": command,
+        }
 
     # Validate working directory
     safe_cwd = _validate_working_dir(cwd)
 
     start_time = time.time()
     try:
-        # Use asyncio to run the command with timeout
-        result = asyncio.run(
-            _run_subprocess(command, safe_cwd, timeout)
+        # Run the command synchronously with subprocess (works in both sync and async contexts)
+        proc_result = subprocess.run(
+            command,
+            cwd=safe_cwd,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
         )
         duration_ms = int((time.time() - start_time) * 1000)
-        result["duration_ms"] = duration_ms
-        result["command"] = command
-        result["cwd"] = safe_cwd
+
+        stdout = proc_result.stdout
+        stderr = proc_result.stderr
+
+        # Truncate very long outputs
+        MAX_OUTPUT = 100_000
+        if len(stdout) > MAX_OUTPUT:
+            stdout = stdout[:MAX_OUTPUT] + f"\n... [truncated, total {len(stdout)} chars]"
+        if len(stderr) > MAX_OUTPUT:
+            stderr = stderr[:MAX_OUTPUT] + f"\n... [truncated, total {len(stderr)} chars]"
+
+        result = {
+            "success": proc_result.returncode == 0,
+            "stdout": stdout,
+            "stderr": stderr,
+            "exit_code": proc_result.returncode,
+            "duration_ms": duration_ms,
+            "command": command,
+            "cwd": safe_cwd,
+        }
 
         logger.info(
             "Command completed in %dms (exit_code=%d): %s",
@@ -212,7 +364,7 @@ def execute_command(
         )
         return result
 
-    except asyncio.TimeoutError:
+    except subprocess.TimeoutExpired:
         duration_ms = int((time.time() - start_time) * 1000)
         logger.warning("Command timed out after %ds: %s", timeout, command)
         return {
@@ -238,47 +390,8 @@ def execute_command(
         }
 
 
-async def _run_subprocess(
-    command: str, cwd: str, timeout: int
-) -> Dict[str, Any]:
-    """
-    Async helper to run a subprocess with timeout.
-
-    Uses ``shell=True`` for flexibility (commands may use pipes, redirects,
-    etc.) but all commands have been pre-validated by ``_is_command_blocked``.
-    """
-    proc = await asyncio.create_subprocess_shell(
-        command,
-        cwd=cwd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-
-    try:
-        stdout_bytes, stderr_bytes = await asyncio.wait_for(
-            proc.communicate(), timeout=timeout
-        )
-        stdout = stdout_bytes.decode("utf-8", errors="replace")
-        stderr = stderr_bytes.decode("utf-8", errors="replace")
-
-        # Truncate very long outputs
-        MAX_OUTPUT = 100_000
-        if len(stdout) > MAX_OUTPUT:
-            stdout = stdout[:MAX_OUTPUT] + f"\n... [truncated, total {len(stdout)} chars]"
-        if len(stderr) > MAX_OUTPUT:
-            stderr = stderr[:MAX_OUTPUT] + f"\n... [truncated, total {len(stderr)} chars]"
-
-        return {
-            "success": proc.returncode == 0,
-            "stdout": stdout,
-            "stderr": stderr,
-            "exit_code": proc.returncode,
-        }
-
-    except asyncio.TimeoutError:
-        proc.kill()
-        await proc.communicate()
-        raise
+# _run_subprocess removed — execute_command now uses subprocess.run()
+# directly, which works correctly in both sync and async contexts.
 
 
 def run_test(test_command: str = "npm test", cwd: str = ".") -> Dict[str, Any]:
@@ -342,27 +455,41 @@ def install_dependency(package: str, cwd: str = ".") -> Dict[str, Any]:
 
     abs_cwd = os.path.abspath(os.path.expanduser(cwd))
 
+    # Validate package name (prevent injection)
+    safe_package = shlex.quote(package)
+    # Also validate the package name looks reasonable
+    if not re.match(r"^[A-Za-z0-9@_\-/.:^~]+$", package):
+        return {
+            "success": False,
+            "error": f"Invalid package name: '{package}'. Package names may only contain letters, numbers, and common separators.",
+            "stdout": "",
+            "stderr": "",
+            "exit_code": -1,
+            "command": "",
+            "duration_ms": 0,
+        }
+
     # Detect package manager
     if os.path.exists(os.path.join(abs_cwd, "package.json")):
         # Detect npm/yarn/pnpm
         if os.path.exists(os.path.join(abs_cwd, "pnpm-lock.yaml")):
-            cmd = f"pnpm add {package}"
+            cmd = f"pnpm add {safe_package}"
         elif os.path.exists(os.path.join(abs_cwd, "yarn.lock")):
-            cmd = f"yarn add {package}"
+            cmd = f"yarn add {safe_package}"
         else:
-            cmd = f"npm install {package}"
+            cmd = f"npm install {safe_package}"
     elif os.path.exists(os.path.join(abs_cwd, "requirements.txt")) or os.path.exists(
         os.path.join(abs_cwd, "pyproject.toml")
     ):
-        cmd = f"pip install {package}"
+        cmd = f"pip install {safe_package}"
     elif os.path.exists(os.path.join(abs_cwd, "Cargo.toml")):
-        cmd = f"cargo add {package}"
+        cmd = f"cargo add {safe_package}"
     elif os.path.exists(os.path.join(abs_cwd, "go.mod")):
-        cmd = f"go get {package}"
+        cmd = f"go get {safe_package}"
     elif os.path.exists(os.path.join(abs_cwd, "Gemfile")):
-        cmd = f"bundle add {package}"
+        cmd = f"bundle add {safe_package}"
     else:
         # Default to npm
-        cmd = f"npm install {package}"
+        cmd = f"npm install {safe_package}"
 
     return execute_command(cmd, cwd=cwd, timeout=120)

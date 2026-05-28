@@ -225,14 +225,28 @@ class ScreenController:
             self._consent_given = True
             return True
 
-        # In a GUI app this would show a dialog; here we log and approve.
+        # SECURITY: Do NOT auto-grant consent in non-interactive environments.
+        # This prevents the agent from taking screenshots without user approval.
         logger.info(
             "Screen recording consent requested. "
-            "In production, present a UI dialog to the user."
+            "Consent must be explicitly granted by the user."
         )
-        # Default to granting in non-interactive environments — override in UI.
-        self._consent_given = True
+        # Consent remains False until explicitly granted via grant_consent()
+        self._consent_given = False
         return self._consent_given
+
+    def grant_consent(self) -> None:
+        """Explicitly grant screen recording consent.
+
+        This must be called by the user/UI after reviewing the consent request.
+        """
+        self._consent_given = True
+        logger.info("Screen recording consent granted by user")
+
+    def revoke_consent(self) -> None:
+        """Revoke previously granted screen recording consent."""
+        self._consent_given = False
+        logger.info("Screen recording consent revoked by user")
 
     def _ensure_consent(self) -> None:
         """Raise if consent has not been given."""
@@ -731,10 +745,19 @@ class ScreenController:
 
         def _exec() -> bool:
             try:
+                # Sanitize title to prevent AppleScript/shell injection
+                safe_title = self._sanitize_process_name(title)
+                if not safe_title:
+                    logger.error("Invalid window title after sanitization: '%s'", title)
+                    return False
+
                 if self.platform == Platform.MACOS and _HAS_APPLESCRIPT:
+                    # Use subprocess with list args to prevent injection
+                    # Quote the process name for AppleScript
+                    escaped = safe_title.replace('"', '\\"')
                     script = f'''
                     tell application "System Events"
-                        tell process "{title}"
+                        tell process "{escaped}"
                             set frontmost to true
                         end tell
                     end tell
@@ -747,33 +770,57 @@ class ScreenController:
                     from pywinauto import Desktop  # type: ignore[import-untyped]
 
                     desktop = Desktop(backend="uia")
-                    window = desktop.window(title_re=f".*{title}.*")
+                    # Use literal match instead of regex to prevent injection
+                    window = desktop.window(title=safe_title)
+                    if not window.exists():
+                        # Fallback to partial match via pywinauto's built-in search
+                        window = desktop.window(title_re=re.escape(safe_title))
                     if window.exists():
                         window.set_focus()
                         return True
                     return False
                 elif self.platform == Platform.LINUX and _HAS_XDOTOOL:
                     result = subprocess.run(  # nosec: xdotool only
-                        ["xdotool", "search", "--name", title],
+                        ["xdotool", "search", "--name", safe_title],
                         capture_output=True,
                         text=True,
                         timeout=10,
                     )
                     for wid in result.stdout.strip().splitlines():
-                        subprocess.run(  # nosec: xdotool only
-                            ["xdotool", "windowactivate", wid],
-                            capture_output=True,
-                            timeout=5,
-                        )
+                        if wid.isdigit():  # Validate window ID
+                            subprocess.run(  # nosec: xdotool only
+                                ["xdotool", "windowactivate", wid],
+                                capture_output=True,
+                                timeout=5,
+                            )
                     return True
                 else:
-                    logger.info("[STUB] focus_window(%s)", title)
+                    logger.info("[STUB] focus_window(%s)", safe_title)
                     return False
             except Exception as exc:
                 logger.error("Failed to focus window '%s': %s", title, exc)
                 return False
 
         return self._wrap_action(ActionType.FOCUS_WINDOW.value, params, _exec, needs_screenshots=False)  # type: ignore[return-value]
+
+    @staticmethod
+    def _sanitize_process_name(name: str) -> str:
+        """
+        Sanitize a process/window name to prevent injection.
+
+        Removes shell-special characters and limits length.
+        """
+        if not name:
+            return ""
+        # Strip shell-special characters
+        sanitized = re.sub(r'[;|&`$(){}[\]\\<>!]', '', name)
+        # Strip control characters
+        sanitized = "".join(ch for ch in sanitized if ch.isprintable() or ch in " \t")
+        # Limit length
+        MAX_NAME_LEN = 200
+        if len(sanitized) > MAX_NAME_LEN:
+            sanitized = sanitized[:MAX_NAME_LEN]
+        return sanitized.strip()
 
     def launch_app(self, app_name: str) -> bool:
         """Launch an application.
@@ -788,15 +835,38 @@ class ScreenController:
 
         def _exec() -> bool:
             try:
+                # Sanitize app name to prevent shell injection
+                safe_name = self._sanitize_process_name(app_name)
+                if not safe_name:
+                    logger.error("Invalid app name after sanitization: '%s'", app_name)
+                    return False
+
+                # Validate: block absolute paths that point to system directories
+                if os.path.isabs(safe_name):
+                    blocked_prefixes = ["/bin", "/sbin", "/usr/bin", "/usr/sbin",
+                                        "/etc", "/dev", "/sys", "/proc"]
+                    for prefix in blocked_prefixes:
+                        if safe_name.startswith(prefix):
+                            logger.error(
+                                "Blocked launch of system binary: '%s' (prefix: '%s')",
+                                safe_name, prefix
+                            )
+                            return False
+
                 if self.platform == Platform.MACOS:
-                    subprocess.Popen(["open", "-a", app_name])  # nosec: open only
+                    subprocess.Popen(["open", "-a", safe_name])  # nosec: open only
                 elif self.platform == Platform.WINDOWS:
-                    subprocess.Popen(["start", "", app_name], shell=True)  # nosec: start only
+                    # Use shell=False via subprocess; 'start' is a cmd built-in
+                    # so we use cmd /c start with the sanitized name
+                    subprocess.Popen(  # nosec: sanitized input
+                        ["cmd", "/c", "start", "", safe_name],
+                        shell=False,
+                    )
                 elif self.platform == Platform.LINUX:
-                    subprocess.Popen([app_name])  # nosec: user-provided app name
+                    subprocess.Popen([safe_name])  # nosec: sanitized app name
                 else:
-                    logger.info("[STUB] launch_app(%s)", app_name)
-                logger.info("Launched application: %s", app_name)
+                    logger.info("[STUB] launch_app(%s)", safe_name)
+                logger.info("Launched application: %s", safe_name)
                 return True
             except Exception as exc:
                 logger.error("Failed to launch '%s': %s", app_name, exc)

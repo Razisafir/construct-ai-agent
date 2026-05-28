@@ -121,4 +121,4 @@ function EditorSkeleton() {
   );
 }
 
-export defau
+export default App;

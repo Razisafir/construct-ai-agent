@@ -9,12 +9,98 @@ structured dictionaries with success/failure status, output, and parsed data.
 
 import re
 import os
+import shlex
 import logging
 import subprocess
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Validation helpers
+# ---------------------------------------------------------------------------
+
+# Characters allowed in branch names (git ref naming rules)
+_VALID_BRANCH_PATTERN = re.compile(r"^[A-Za-z0-9_\-/.@]+$")
+
+# Maximum branch name length
+_MAX_BRANCH_LENGTH = 244
+
+# Blocked branch names (destructive or reserved)
+_BLOCKED_BRANCH_NAMES = {
+    "HEAD", "FETCH_HEAD", "ORIG_HEAD", "MERGE_HEAD",
+    "-",  # disallowed by git
+}
+
+
+def _validate_branch_name(name: str) -> Optional[str]:
+    """
+    Validate a git branch name.
+
+    Returns an error message if invalid, *None* if valid.
+    """
+    if not name:
+        return "Branch name cannot be empty"
+    if len(name) > _MAX_BRANCH_LENGTH:
+        return f"Branch name too long ({len(name)} > {_MAX_BRANCH_LENGTH})"
+    if name in _BLOCKED_BRANCH_NAMES:
+        return f"Branch name '{name}' is reserved"
+    if name.startswith("-"):
+        return "Branch name cannot start with '-'"
+    if name.startswith("."):
+        return "Branch name cannot start with '.'"
+    if ".." in name:
+        return "Branch name cannot contain '..'"
+    if "@{" in name:
+        return "Branch name cannot contain '@{'"
+    if not _VALID_BRANCH_PATTERN.match(name):
+        return f"Branch name contains invalid characters: '{name}'"
+    return None
+
+
+def _escape_commit_message(message: str) -> str:
+    """
+    Escape a commit message to prevent git option injection.
+
+    - Strips leading '-' to prevent option injection
+    - Escapes newlines (git treats them specially)
+    - Limits length
+    """
+    # Strip leading whitespace and '-'
+    message = message.lstrip()
+    while message.startswith("-"):
+        message = message[1:].lstrip()
+
+    # Limit length
+    MAX_COMMIT_MSG = 10_000
+    if len(message) > MAX_COMMIT_MSG:
+        message = message[:MAX_COMMIT_MSG] + "... [truncated]"
+
+    # Replace null bytes
+    message = message.replace("\x00", "")
+
+    return message
+
+
+def _validate_file_paths(paths: List[str]) -> Optional[str]:
+    """
+    Validate a list of file paths for git operations.
+
+    Returns an error message if any path is suspicious, *None* if all valid.
+    """
+    for p in paths:
+        # Block path traversal
+        normalized = os.path.normpath(p)
+        if normalized.startswith("..") or "/../" in normalized:
+            return f"Path traversal blocked in: '{p}'"
+        # Block paths starting with '-' (git option injection)
+        if p.startswith("-"):
+            return f"Path cannot start with '-': '{p}'"
+        # Block null bytes
+        if "\x00" in p:
+            return f"Path contains null bytes: '{p}'"
+    return None
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -269,6 +355,11 @@ def git_commit(
     if not _is_git_repo(cwd):
         return {"success": False, "error": "Not a git repository", "cwd": cwd}
 
+    # Escape commit message to prevent injection
+    safe_message = _escape_commit_message(message)
+    if not safe_message:
+        return {"success": False, "error": "Commit message cannot be empty"}
+
     # Stage changes if requested
     if auto_stage:
         stage_result = _run_git(["add", "-A"], cwd=cwd)
@@ -278,8 +369,8 @@ def git_commit(
                 "error": f"Failed to stage files: {stage_result['stderr']}",
             }
 
-    # Commit
-    result = _run_git(["commit", "-m", message], cwd=cwd)
+    # Commit with escaped message
+    result = _run_git(["commit", "-m", safe_message], cwd=cwd)
     if not result["success"]:
         return {
             "success": False,
@@ -297,7 +388,7 @@ def git_commit(
     return {
         "success": True,
         "commit_hash": commit_hash,
-        "message": message,
+        "message": safe_message,
         "output": result["stdout"].strip(),
     }
 
@@ -330,6 +421,9 @@ def git_branch(
 
     # Create branch if requested
     if create:
+        error = _validate_branch_name(create)
+        if error:
+            return {"success": False, "error": error}
         result = _run_git(["checkout", "-b", create], cwd=cwd)
         if not result["success"]:
             return {
@@ -475,6 +569,18 @@ def git_checkout(
     if not _is_git_repo(cwd):
         return {"success": False, "error": "Not a git repository", "cwd": cwd}
 
+    # Validate target (prevent option injection)
+    if target.startswith("-"):
+        return {"success": False, "error": f"Checkout target cannot start with '-': '{target}'"}
+    if "\x00" in target:
+        return {"success": False, "error": "Checkout target contains null bytes"}
+
+    # If creating a branch, validate the branch name
+    if create:
+        error = _validate_branch_name(target)
+        if error:
+            return {"success": False, "error": error}
+
     args = ["checkout"]
     if create:
         args.append("-b")
@@ -521,7 +627,12 @@ def git_add(files: List[str], cwd: str = ".") -> Dict[str, Any]:
     if not files:
         return {"success": False, "error": "No files provided to stage"}
 
-    result = _run_git(["add"] + files, cwd=cwd)
+    # Validate file paths (prevent option injection and traversal)
+    error = _validate_file_paths(files)
+    if error:
+        return {"success": False, "error": error}
+
+    result = _run_git(["add", "--"] + files, cwd=cwd)
     if result["success"]:
         return {
             "success": True,
@@ -540,6 +651,7 @@ def git_reset(cwd: str = ".", hard: bool = False) -> Dict[str, Any]:
         Repository working directory.
     hard:
         If *True*, perform a hard reset (discards all changes).
+        Hard reset requires explicit confirmation due to data loss risk.
 
     Returns
     -------
@@ -549,12 +661,53 @@ def git_reset(cwd: str = ".", hard: bool = False) -> Dict[str, Any]:
     if not _is_git_repo(cwd):
         return {"success": False, "error": "Not a git repository", "cwd": cwd}
 
-    args = ["reset"]
+    # Safety: hard reset is destructive and requires explicit opt-in
     if hard:
-        args.append("--hard")
-    else:
-        args.append("--soft")
-    args.append("HEAD")
+        logger.warning(
+            "git reset --hard requested on %s — this will discard all uncommitted changes",
+            cwd
+        )
+        # Return a warning that the caller must acknowledge
+        return {
+            "success": False,
+            "error": (
+                "Hard reset is a destructive operation that discards all uncommitted changes. "
+                "To confirm, call git_reset_hard_confirm() instead."
+            ),
+            "mode": "hard",
+            "requires_confirmation": True,
+        }
+
+    args = ["reset", "--soft", "HEAD"]
 
     result = _run_git(args, cwd=cwd)
+    return result
+
+
+def git_reset_hard_confirm(cwd: str = ".") -> Dict[str, Any]:
+    """
+    Perform a hard reset after explicit confirmation.
+
+    This function exists as a separate entry point to ensure callers
+    consciously acknowledge the data-loss risk of ``git reset --hard``.
+
+    Parameters
+    ----------
+    cwd:
+        Repository working directory.
+
+    Returns
+    -------
+    dict
+        ``success``, ``mode``.
+    """
+    if not _is_git_repo(cwd):
+        return {"success": False, "error": "Not a git repository", "cwd": cwd}
+
+    logger.info("Executing confirmed git reset --hard on %s", cwd)
+
+    args = ["reset", "--hard", "HEAD"]
+    result = _run_git(args, cwd=cwd)
+    result["mode"] = "hard"
+    result["warning"] = "All uncommitted changes have been discarded"
     return result

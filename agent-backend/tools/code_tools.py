@@ -11,11 +11,16 @@ would require additional dependencies.
 import os
 import re
 import ast
-import astor
 import logging
 import textwrap
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
+
+# astor is optional — fallback to ast.unparse (Python 3.9+)
+try:
+    import astor
+except ImportError:
+    astor = None
 
 logger = logging.getLogger(__name__)
 
@@ -371,17 +376,25 @@ def _rename_python(
     new_tree = transformer.visit(tree)
     ast.fix_missing_locations(new_tree)
 
-    try:
-        new_source = astor.to_source(new_tree)
-    except Exception:
-        # Fallback to ast.unparse (Python 3.9+)
-        if hasattr(ast, "unparse"):
-            new_source = ast.unparse(new_tree)
-        else:
-            raise RuntimeError(
-                "Cannot convert AST back to source. "
-                "Install 'astor' or use Python 3.9+"
-            )
+    if astor is not None:
+        try:
+            new_source = astor.to_source(new_tree)
+        except Exception:
+            # Fallback to ast.unparse (Python 3.9+)
+            if hasattr(ast, "unparse"):
+                new_source = ast.unparse(new_tree)
+            else:
+                raise RuntimeError(
+                    "Cannot convert AST back to source. "
+                    "Install 'astor' or use Python 3.9+"
+                )
+    elif hasattr(ast, "unparse"):
+        new_source = ast.unparse(new_tree)
+    else:
+        raise RuntimeError(
+            "Cannot convert AST back to source. "
+            "Install 'astor' or use Python 3.9+"
+        )
 
     return new_source, transformer.renames
 

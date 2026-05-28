@@ -632,8 +632,19 @@ class ToolRegistry:
             # Inspect the function to determine if it's async
             if inspect.iscoroutinefunction(tool_func):
                 import asyncio
+                import concurrent.futures
 
-                result = asyncio.run(tool_func(**arguments))
+                try:
+                    # Check if we're already in an event loop (e.g., FastAPI)
+                    asyncio.get_running_loop()
+                    # We're in an async context — run in a thread pool
+                    # to avoid "asyncio.run() cannot be called from a running loop"
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                        future = pool.submit(asyncio.run, tool_func(**arguments))
+                        result = future.result()
+                except RuntimeError:
+                    # No running loop — safe to use asyncio.run directly
+                    result = asyncio.run(tool_func(**arguments))
             else:
                 result = tool_func(**arguments)
 

@@ -763,8 +763,13 @@ class LLMService:
 
         url = (
             f"https://generativelanguage.googleapis.com/v1beta/models/{config.model}:generateContent"
-            f"?key={config.api_key}"
         )
+        # SECURITY: API key is sent via x-goog-api-key header instead of URL
+        # query parameter to prevent logging by proxies and servers.
+        headers: Dict[str, str] = {
+            "Content-Type": "application/json",
+            "x-goog-api-key": config.api_key or "",
+        }
         payload: Dict[str, Any] = {
             "contents": contents,
             "generationConfig": {
@@ -789,7 +794,7 @@ class LLMService:
             payload["tools"] = [{"functionDeclarations": declarations}]
 
         session = self._get_aiohttp_session()
-        async with session.post(url, json=payload) as resp:
+        async with session.post(url, json=payload, headers=headers) as resp:
             if resp.status != 200:
                 text = await resp.text()
                 raise RuntimeError(f"Google API error {resp.status}: {text[:500]}")
@@ -858,8 +863,13 @@ class LLMService:
 
         url = (
             f"https://generativelanguage.googleapis.com/v1beta/models/{config.model}:streamGenerateContent"
-            f"?alt=sse&key={config.api_key}"
+            f"?alt=sse"
         )
+        # SECURITY: API key sent via header instead of URL query parameter
+        stream_headers: Dict[str, str] = {
+            "Content-Type": "application/json",
+            "x-goog-api-key": config.api_key or "",
+        }
         payload: Dict[str, Any] = {
             "contents": contents,
             "generationConfig": {
@@ -871,7 +881,7 @@ class LLMService:
             payload["systemInstruction"] = {"parts": system_parts}
 
         session = self._get_aiohttp_session()
-        async with session.post(url, json=payload) as resp:
+        async with session.post(url, json=payload, headers=stream_headers) as resp:
             if resp.status != 200:
                 text = await resp.text()
                 raise RuntimeError(f"Google API error {resp.status}: {text[:500]}")

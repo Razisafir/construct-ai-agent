@@ -24,7 +24,8 @@ pub fn run() {
             app.manage(AutonomousManager::new());
 
             // Set up the system tray icon + context menu.
-            tray::setup_tray(app).expect("failed to set up system tray");
+            let app_handle = app.handle();
+            tray::setup_tray(&app_handle).expect("failed to set up system tray");
 
             #[cfg(debug_assertions)]
             {

@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import type { ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Monitor,
@@ -44,7 +45,7 @@ interface Screenshot {
   label: string;
 }
 
-const actionTypeIcons: Record<string, React.ReactNode> = {
+const actionTypeIcons: Record<string, ReactNode> = {
   click: <MousePointer size={12} />,
   type: <Type size={12} />,
   key: <Keyboard size={12} />,

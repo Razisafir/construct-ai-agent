@@ -43,17 +43,18 @@ pub fn setup_tray<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<dyn std::err
     let quit_i = MenuItemBuilder::with_id(menu_id::QUIT, "Quit")
         .build(app)?;
 
-    let sep = PredefinedMenuItem::separator(app)?;
+    let sep1 = PredefinedMenuItem::separator(app)?;
+    let sep2 = PredefinedMenuItem::separator(app)?;
 
     // --- Assemble menu -------------------------------------------------------
 
     let menu = MenuBuilder::new(app)
         .item(&show_hide_i)
-        .item(&sep)
+        .item(&sep1)
         .item(&pause_i)
         .item(&resume_i)
         .item(&stop_i)
-        .item(&sep)
+        .item(&sep2)
         .item(&quit_i)
         .build()?;
 

@@ -92,6 +92,7 @@ pub struct AgentSession {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentOutputEvent {
     pub session_id: String,
+    #[serde(rename = "type")]
     pub event_type: String,
     pub content: String,
     pub timestamp: i64,

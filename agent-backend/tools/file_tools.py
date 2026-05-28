@@ -12,9 +12,79 @@ import re
 import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Any
-from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Path traversal prevention
+# ---------------------------------------------------------------------------
+
+# Base directory for all file operations — resolved at import time.
+# All file paths are validated to be within this directory tree.
+BASE_DIR: str = os.path.abspath(os.getcwd())
+
+
+def _resolve_and_validate(path: str, must_exist: bool = False) -> str:
+    """
+    Resolve *path* to an absolute path and validate it is within *BASE_DIR*.
+
+    This prevents path traversal attacks (``../``) and symlink following
+    that would escape the project directory.
+
+    Parameters
+    ----------
+    path:
+        Absolute or relative file path.
+    must_exist:
+        If *True*, also verify the path exists on disk.
+
+    Returns
+    -------
+    str
+        The resolved absolute path.
+
+    Raises
+    ------
+    ValueError
+        If the path escapes *BASE_DIR* or contains traversal patterns.
+    FileNotFoundError
+        If *must_exist* is *True* and the path does not exist.
+    """
+    expanded = os.path.expanduser(path)
+    # Resolve symlinks and ``..`` segments to get the real path
+    resolved = os.path.realpath(expanded)
+    abs_path = os.path.abspath(resolved)
+
+    # Check for common traversal indicators in the original input
+    if ".." in os.path.normpath(expanded).split(os.sep):
+        # Allow ``..`` only if the resolved path stays within BASE_DIR
+        try:
+            os.path.commonpath([BASE_DIR, abs_path])
+        except ValueError:
+            raise ValueError(
+                f"Path traversal blocked: '{path}' resolves outside "
+                f"the allowed directory ({BASE_DIR})"
+            )
+
+    # Ensure the resolved path is under BASE_DIR
+    try:
+        common = os.path.commonpath([BASE_DIR, abs_path])
+    except ValueError:
+        raise ValueError(
+            f"Path traversal blocked: '{path}' resolves outside "
+            f"the allowed directory ({BASE_DIR})"
+        )
+
+    if common != BASE_DIR:
+        raise ValueError(
+            f"Path traversal blocked: '{path}' resolves to '{abs_path}' "
+            f"which is outside the allowed directory ({BASE_DIR})"
+        )
+
+    if must_exist and not os.path.exists(abs_path):
+        raise FileNotFoundError(f"Path does not exist: {path}")
+
+    return abs_path
 
 # ---------------------------------------------------------------------------
 # Safety configuration
@@ -95,6 +165,29 @@ def _is_path_blocked(file_path: str) -> Optional[str]:
     return None
 
 
+def _is_symlink_outside_base(file_path: str) -> bool:
+    """
+    Check whether *file_path* or any of its parents is a symlink
+    that points outside *BASE_DIR*.
+
+    Returns *True* if a dangerous symlink is detected.
+    """
+    expanded = os.path.expanduser(file_path)
+    abs_path = os.path.abspath(expanded)
+    current = abs_path
+    while current and current != os.path.dirname(current):
+        if os.path.islink(current):
+            link_target = os.path.realpath(current)
+            try:
+                common = os.path.commonpath([BASE_DIR, link_target])
+                if common != BASE_DIR:
+                    return True
+            except ValueError:
+                return True
+        current = os.path.dirname(current)
+    return False
+
+
 def _is_binary_extension(file_path: str) -> bool:
     """Return *True* if the file extension indicates a binary file."""
     _, ext = os.path.splitext(file_path.lower())
@@ -120,11 +213,18 @@ def _safe_read(path: str, offset: int = 0, limit: int = 100) -> Dict[str, Any]:
         Structured result with ``success``, ``content``, ``lines_read``, etc.
     """
     try:
-        expanded = os.path.expanduser(path)
-        abs_path = os.path.abspath(expanded)
+        # Validate path is within allowed directory
+        try:
+            abs_path = _resolve_and_validate(path, must_exist=True)
+        except (ValueError, FileNotFoundError) as exc:
+            return {"success": False, "error": str(exc)}
 
-        if not os.path.exists(abs_path):
-            return {"success": False, "error": f"File not found: {path}"}
+        # Block symlinks that escape the base directory
+        if _is_symlink_outside_base(path):
+            return {
+                "success": False,
+                "error": f"Symlink traversal blocked: '{path}' points outside the allowed directory",
+            }
 
         if not os.path.isfile(abs_path):
             return {"success": False, "error": f"Not a file: {path}"}
@@ -149,7 +249,9 @@ def _safe_read(path: str, offset: int = 0, limit: int = 100) -> Dict[str, Any]:
                 ),
             }
 
-        with open(abs_path, "r", encoding="utf-8", errors="replace") as f:
+        # Read via resolved path to ensure we follow symlinks safely
+        resolved = os.path.realpath(abs_path)
+        with open(resolved, "r", encoding="utf-8", errors="replace") as f:
             lines = f.readlines()
 
         total_lines = len(lines)
@@ -208,8 +310,18 @@ def _safe_write(
         Structured result with ``success``, ``bytes_written``, etc.
     """
     try:
-        expanded = os.path.expanduser(path)
-        abs_path = os.path.abspath(expanded)
+        # Validate path is within allowed directory
+        try:
+            abs_path = _resolve_and_validate(path)
+        except ValueError as exc:
+            return {"success": False, "error": str(exc)}
+
+        # Block symlinks that escape the base directory
+        if _is_symlink_outside_base(path):
+            return {
+                "success": False,
+                "error": f"Symlink traversal blocked: '{path}' points outside the allowed directory",
+            }
 
         # Safety checks
         blocked = _is_path_blocked(abs_path)
@@ -241,13 +353,19 @@ def _safe_write(
                 ),
             }
 
-        # Ensure parent directory exists
+        # Ensure parent directory exists and is within BASE_DIR
         parent = os.path.dirname(abs_path)
         if parent:
-            os.makedirs(parent, exist_ok=True)
+            try:
+                parent_resolved = _resolve_and_validate(parent)
+                os.makedirs(parent_resolved, exist_ok=True)
+            except (ValueError, FileNotFoundError) as exc:
+                return {"success": False, "error": f"Invalid parent directory: {exc}"}
 
         mode = "a" if append else "w"
-        with open(abs_path, mode, encoding="utf-8") as f:
+        # Write via resolved path
+        resolved = os.path.realpath(abs_path) if os.path.exists(abs_path) else abs_path
+        with open(resolved, mode, encoding="utf-8") as f:
             f.write(content)
 
         bytes_written = len(content_bytes)
@@ -359,34 +477,58 @@ def list_directory(dir_path: str = ".") -> List[Dict[str, Any]]:
         ``modified``, and ``permissions``.
     """
     logger.info("list_directory: %s", dir_path)
-    expanded = os.path.expanduser(dir_path)
-    abs_path = os.path.abspath(expanded)
 
     try:
-        if not os.path.exists(abs_path):
-            return [{"error": f"Directory not found: {dir_path}"}]
+        # Validate path is within allowed directory
+        abs_path = _resolve_and_validate(dir_path, must_exist=True)
 
         if not os.path.isdir(abs_path):
             return [{"error": f"Not a directory: {dir_path}"}]
 
+        # Block symlinks that escape the base directory
+        if _is_symlink_outside_base(dir_path):
+            return [
+                {
+                    "error": f"Symlink traversal blocked: '{dir_path}' points outside the allowed directory"
+                }
+            ]
+
         entries = []
         for entry in sorted(os.listdir(abs_path)):
             entry_path = os.path.join(abs_path, entry)
-            stat_info = os.stat(entry_path)
-            entries.append(
-                {
-                    "name": entry,
-                    "path": entry_path,
-                    "type": "directory" if os.path.isdir(entry_path) else "file",
-                    "size": stat_info.st_size if os.path.isfile(entry_path) else None,
-                    "modified": stat_info.st_mtime,
-                    "permissions": oct(stat_info.st_mode)[-3:],
-                }
-            )
+            # Skip symlinks that point outside BASE_DIR
+            if os.path.islink(entry_path):
+                link_target = os.path.realpath(entry_path)
+                try:
+                    common = os.path.commonpath([BASE_DIR, link_target])
+                    if common != BASE_DIR:
+                        logger.warning("Skipping symlink '%s' -> '%s' (outside base)", entry_path, link_target)
+                        continue
+                except ValueError:
+                    logger.warning("Skipping symlink '%s' with invalid target", entry_path)
+                    continue
+            try:
+                stat_info = os.stat(entry_path, follow_symlinks=False)
+                entries.append(
+                    {
+                        "name": entry,
+                        "path": entry_path,
+                        "type": "directory" if os.path.isdir(entry_path) else "file",
+                        "size": stat_info.st_size if os.path.isfile(entry_path) else None,
+                        "modified": stat_info.st_mtime,
+                        "permissions": oct(stat_info.st_mode)[-3:],
+                        "is_symlink": os.path.islink(entry_path),
+                    }
+                )
+            except (OSError, PermissionError):
+                # Skip entries we can't stat
+                continue
 
         _log_file_op("list_directory", abs_path, entries_count=len(entries))
         return entries
 
+    except (ValueError, FileNotFoundError) as exc:
+        return [{"error": str(exc)}]
     except PermissionError:
         return [{"error": f"Permission denied: {dir_path}"}]
     except Exception as exc:

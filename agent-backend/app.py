@@ -29,14 +29,57 @@ from __future__ import annotations
 
 import os
 import time
+import asyncio
 import logging
 from contextlib import asynccontextmanager
-from typing import List, Optional
+from typing import List, Optional, Any
 
-from fastapi import FastAPI, HTTPException, Path
+from fastapi import FastAPI, HTTPException, Path, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+
+# ---------------------------------------------------------------------------
+# Rate limiting
+# ---------------------------------------------------------------------------
+import time
+from collections import defaultdict
+
+
+class RateLimiter:
+    """Simple in-memory rate limiter per client IP."""
+
+    def __init__(self, requests_per_minute: int = 60) -> None:
+        self.requests_per_minute = requests_per_minute
+        # Map: client_ip -> list of timestamps
+        self._requests: defaultdict[str, list[float]] = defaultdict(list)
+
+    def is_allowed(self, client_ip: str) -> bool:
+        now = time.time()
+        window_start = now - 60.0
+        # Keep only requests within the last minute
+        self._requests[client_ip] = [
+            ts for ts in self._requests[client_ip] if ts > window_start
+        ]
+        if len(self._requests[client_ip]) >= self.requests_per_minute:
+            return False
+        self._requests[client_ip].append(now)
+        return True
+
+
+# Global rate limiter: 60 requests per minute per IP
+_rate_limiter = RateLimiter(requests_per_minute=60)
+
+
+async def rate_limit_middleware(request: Request, call_next):
+    """FastAPI middleware to enforce rate limiting."""
+    client_ip = request.client.host if request.client else "unknown"
+    if not _rate_limiter.is_allowed(client_ip):
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Rate limit exceeded. Try again later."},
+        )
+    return await call_next(request)
 
 from memory import (
     store_conversation_message,
@@ -183,19 +226,30 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — allow Tauri frontend / local dev origins
+# CORS — allow Tauri frontend / local dev origins only
+# SECURITY: restrict to known origins; do NOT use "*" in production
+_cors_origins = [
+    "http://localhost:5173",   # Tauri dev server
+    "http://127.0.0.1:5173",
+    "http://localhost:8000",
+    "tauri://localhost",
+]
+
+# Allow additional origins from environment (for custom setups)
+_extra_origins = os.environ.get("CORS_EXTRA_ORIGINS", "")
+if _extra_origins:
+    _cors_origins.extend(o.strip() for o in _extra_origins.split(",") if o.strip())
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",   # Tauri dev server
-        "http://127.0.0.1:5173",
-        "http://localhost:8000",
-        "tauri://localhost",
-    ],
+    allow_origins=_cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],  # Explicit method list
+    allow_headers=["Content-Type", "Authorization", "X-Request-ID"],  # Explicit headers
 )
+
+# Add rate limiting middleware
+app.middleware("http")(rate_limit_middleware)
 
 
 # ===========================================================================
