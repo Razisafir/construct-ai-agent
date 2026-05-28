@@ -44,7 +44,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Rust
-        uses: rust-lang/setup-rust@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           rust-version: stable
           components: rustfmt, clippy
@@ -86,7 +86,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Rust
-        uses: rust-lang/setup-rust@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           rust-version: stable
           targets: x86_64-apple-darwin,aarch64-apple-darwin
@@ -127,7 +127,7 @@ jobs:
             libappindicator3-dev librsvg2-dev patchelf pkg-config
 
       - name: Install Rust
-        uses: rust-lang/setup-rust@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           rust-version: stable
 
