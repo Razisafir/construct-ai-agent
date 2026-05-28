@@ -2,7 +2,7 @@ import React, { Component, ErrorInfo } from "react";
 
 const C = {
   base: "#0a0a10", s1: "#12121a", s2: "#1a1a24",
-  accent: "#6366f1", t1: "#e8e8ec", t2: "#94949c", t3: "#6b6b73", err: "#ef4444",
+  accent: "#6366f1", t1: "#e8e8ec", t2: "#94949c", t3: "#6b6b73", t4: "#4a4a52", err: "#ef4444",
 };
 const ff = '"Geist Mono", "JetBrains Mono", monospace';
 

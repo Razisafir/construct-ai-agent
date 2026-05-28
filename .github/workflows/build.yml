@@ -16,6 +16,7 @@ jobs:
   # ── Frontend checks (non-blocking) ────────────────────────────────────────
   check-frontend:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -46,7 +47,6 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          rust-version: stable
           components: rustfmt, clippy
 
       - name: Install Tauri CLI
@@ -88,7 +88,6 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          rust-version: stable
           targets: x86_64-apple-darwin,aarch64-apple-darwin
 
       - name: Install Tauri CLI
@@ -129,7 +128,6 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          rust-version: stable
 
       - name: Install Tauri CLI
         run: cargo install tauri-cli --locked

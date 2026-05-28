@@ -129,7 +129,7 @@ const sliderSx: React.CSSProperties = {
   width: "140px", height: "2px", accentColor: C.accent,
 };
 
-function RadioRow<T extends string>({ label, value, options, onChange }: {
+function RadioRow<T extends string | number>({ label, value, options, onChange }: {
   label: string; value: T; options: T[]; onChange: (v: T) => void;
 }) {
   return (

@@ -234,7 +234,6 @@ function AppRoot() {
   }, []);
 
   const openSettings = useCallback(() => setShowSettings(true), []);
-  const closeSettings = useCallback(() => setShowSettings(false), []);
 
   // ── Settings keyboard shortcut (Ctrl+, / Cmd+,) ──
   useSettingsShortcut(openSettings);
@@ -494,7 +493,7 @@ function AppRoot() {
       {/* ── Settings Panel ── */}
       {showSettings && (
         <Suspense fallback={null}>
-          <SettingsPanel onClose={closeSettings} />
+          <SettingsPanel />
         </Suspense>
       )}
     </div>
