@@ -14,46 +14,54 @@
     "windows": [
       {
         "title": "Construct",
-        "label": "main",
         "width": 1400,
         "height": 900,
         "minWidth": 900,
         "minHeight": 600,
         "center": true,
         "resizable": true,
-        "fullscreen": false,
+        "maximized": false,
         "decorations": true,
         "transparent": false,
-        "visible": true
+        "focus": true,
+        "visible": false
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' https://api.github.com https://*.openai.com https://*.anthropic.com https://*.googleapis.com; img-src 'self' data: https:; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
+      "csp": "default-src 'self'; connect-src 'self' https://api.github.com https://*.openai.com https://*.anthropic.com https://*.googleapis.com https://api.construct.ai; img-src 'self' data: https:; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
     }
   },
   "bundle": {
     "active": true,
-    "targets": ["dmg", "nsis", "appimage", "deb", "rpm"],
-    "icon": [],
+    "targets": ["msi", "nsis", "dmg", "deb", "appimage", "rpm"],
+    "identifier": "com.construct.ai",
+    "icon": [
+      "icons/icon.ico",
+      "icons/icon.icns",
+      "icons/icon.png",
+      "icons/icon-32x32.png",
+      "icons/icon-128x128.png",
+      "icons/icon-512x512.png"
+    ],
+    "resources": [],
+    "copyright": "2026 Construct AI Inc. All Rights Reserved.",
     "category": "DeveloperTool",
-    "shortDescription": "AI coding agent with persistent memory",
-    "longDescription": "Construct is a desktop AI coding agent that understands your codebase, remembers every interaction, and autonomously plans, codes, tests, and commits.",
-    "macOS": {
-      "frameworks": [],
-      "minimumSystemVersion": "10.15",
-      "license": "../../LICENSE",
-      "signingIdentity": null,
-      "entitlements": null
-    },
-    "windows": {
-      "certificateThumbprint": null,
-      "digestAlgorithm": "sha256",
-      "timestampUrl": ""
-    },
+    "shortDescription": "AI coding agent that never forgets",
+    "longDescription": "Autonomous AI coding assistant with persistent memory, multi-agent teams, and 24/7 background execution.",
     "linux": {
       "deb": {
-        "depends": ["libgtk-3-0", "libwebkit2gtk-4.0-37"]
+        "depends": ["libgtk-3-0", "libwebkit2gtk-4.0-37", "libappindicator3-1"]
       }
+    },
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "installMode": "both"
+      }
+    },
+    "macOS": {
+      "frameworks": [],
+      "minimumSystemVersion": "10.13"
     }
   },
   "plugins": {
@@ -61,7 +69,7 @@
       "active": true,
       "endpoints": ["https://api.construct.ai/releases/{{target}}/{{arch}}/{{current_version}}"],
       "dialog": true,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFFQzU1QzY3OEI0RTJBNjAKUldTU0ZBN1VWa1VLbTJGQStRU2tNWWhGU0d4TlgyRmtsN1hFS3J1UEFuQmV2Rm5KM2x6dmJpbUEK"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEYxNkUxNUI3QjRGN0I2NDYKUldTU0FFeE9KeVlPSnlub0VYcTJqcnZ5bFd3ZzN0NmFxRUdBb0tDZFlBUzJmQUV4WDRjM01pMWMK"
     }
   }
 }
