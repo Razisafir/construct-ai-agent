@@ -49,3 +49,10 @@ psutil>=6.0.0
 
 # Task scheduling
 schedule>=1.2.0
+
+# ---------------------------------------------------------------------------
+# Document Conversion
+# ---------------------------------------------------------------------------
+
+# Microsoft MarkItDown — convert 20+ document formats to Markdown
+markitdown[all]>=0.1.0

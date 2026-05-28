@@ -35,7 +35,7 @@ const BORDER = "rgba(255,255,255,0.04)";
 
 const ff = '"Geist Mono", "JetBrains Mono", monospace';
 
-const categories = ["ALL", "CODING", "DESIGN", "RESEARCH", "DEVOPS", "SECURITY", "TESTING"];
+const categories = ["ALL", "CODING", "DESIGN", "RESEARCH", "DEVOPS", "SECURITY", "TESTING", "DOCUMENTS"];
 
 /* ─── Demo Data ─── */
 const demoSkills: Skill[] = [
@@ -47,6 +47,8 @@ const demoSkills: Skill[] = [
   { id: "6", name: "api-documentation", description: "Generate API docs from OpenAPI specs.", category: "research", version: "0.9.0", installed: false, steps: [{ order: 1, action: "parse_openapi", description: "Parse OpenAPI spec", tool: "parser", parameters: {} }, { order: 2, action: "generate_docs", description: "Generate markdown docs", tool: "doc_writer", parameters: {} }], tools_needed: ["parser", "doc_writer"], examples: ["Document REST API"] },
   { id: "7", name: "dockerfile-generator", description: "Generate optimized Dockerfiles for any stack.", category: "devops", version: "1.3.0", installed: false, steps: [{ order: 1, action: "detect_stack", description: "Detect project stack", tool: "scanner", parameters: {} }, { order: 2, action: "write_dockerfile", description: "Write Dockerfile", tool: "code_writer", parameters: {} }], tools_needed: ["scanner", "code_writer"], examples: ["Dockerize Node.js app"] },
   { id: "8", name: "dependency-audit", description: "Audit dependencies for known vulnerabilities.", category: "security", version: "1.5.0", installed: false, steps: [{ order: 1, action: "scan_deps", description: "Scan dependencies", tool: "scanner", parameters: {} }, { order: 2, action: "report", description: "Generate audit report", tool: "report_writer", parameters: {} }], tools_needed: ["scanner", "report_writer"], examples: ["Audit npm packages"] },
+  { id: "9", name: "document-conversion", description: "Convert PDF, DOCX, PPTX, and 20+ formats to Markdown.", category: "documents", version: "1.0.0", installed: true, steps: [{ order: 1, action: "detect_format", description: "Detect input file format", tool: "markitdown", parameters: {} }, { order: 2, action: "convert", description: "Convert to Markdown", tool: "markitdown", parameters: {} }, { order: 3, action: "extract_structure", description: "Extract headings, tables, structure", tool: "markitdown", parameters: {} }], tools_needed: ["markitdown"], examples: ["Convert API docs PDF to Markdown"] },
+  { id: "10", name: "binary-analysis", description: "Reverse engineer binaries with Ghidra for vulnerability detection.", category: "security", version: "1.0.0", installed: false, steps: [{ order: 1, action: "analyze_binary", description: "Analyze binary with Ghidra", tool: "ghidra", parameters: {} }, { order: 2, action: "find_vulns", description: "Find vulnerabilities", tool: "ghidra", parameters: {} }, { order: 3, action: "decompile", description: "Decompile suspicious functions", tool: "ghidra", parameters: {} }], tools_needed: ["ghidra"], examples: ["Analyze suspicious ELF binary"] },
 ];
 
 export default function SkillMarketplace() {

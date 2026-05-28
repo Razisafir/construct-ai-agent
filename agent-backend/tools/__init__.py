@@ -30,8 +30,109 @@ from tools.git_tools import (
     git_reset,
 )
 from tools.code_tools import parse_ast, find_references, refactor_rename, extract_function
+from tools.markitdown_tool import MarkItDownTool
+from tools.ghidra_tool import GhidraTool
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Tool adapter helpers — bridge class-based tools to the function registry
+# ---------------------------------------------------------------------------
+
+# Lazy-initialized singleton instances for stateful tools
+_markitdown_instance: Optional[MarkItDownTool] = None
+_ghidra_instance: Optional[GhidraTool] = None
+
+
+def _get_markitdown() -> MarkItDownTool:
+    """Return (creating if needed) the shared MarkItDownTool instance."""
+    global _markitdown_instance
+    if _markitdown_instance is None:
+        _markitdown_instance = MarkItDownTool()
+    return _markitdown_instance
+
+
+def _get_ghidra() -> GhidraTool:
+    """Return (creating if needed) the shared GhidraTool instance."""
+    global _ghidra_instance
+    if _ghidra_instance is None:
+        _ghidra_instance = GhidraTool()
+    return _ghidra_instance
+
+
+# -- MarkItDown tool wrappers -----------------------------------------------
+
+def convert_document(file_path: str, output_path: Optional[str] = None) -> Dict[str, Any]:
+    """Convert a document (PDF, DOCX, PPTX, CSV, JSON, etc.) to Markdown.
+
+    Uses Microsoft's MarkItDown library with custom fallback parsers.
+    Supports 20+ formats including images (OCR) and audio (transcription).
+    """
+    return _get_markitdown().convert_file(file_path, output_path)
+
+
+def batch_convert_documents(directory: str, output_dir: str) -> Dict[str, Any]:
+    """Convert all supported documents in a directory to Markdown."""
+    return _get_markitdown().convert_batch(directory, output_dir)
+
+
+def extract_document_structure(file_path: str) -> Dict[str, Any]:
+    """Extract structure from a document: headings, tables, word count."""
+    return _get_markitdown().extract_structure(file_path)
+
+
+# -- Ghidra tool wrappers ---------------------------------------------------
+
+def analyze_binary(binary_path: str, project_name: str = "construct_analysis") -> Dict[str, Any]:
+    """Analyze a binary with NSA Ghidra: functions, strings, sections, imports."""
+    tool = _get_ghidra()
+    if not tool.is_available():
+        return {
+            "success": False,
+            "error": (
+                "Ghidra is not installed or not found. "
+                "Install at /opt/ghidra or set GHIDRA_PATH environment variable."
+            ),
+        }
+    return tool.analyze_binary(binary_path, project_name)
+
+
+def decompile_function(binary_path: str, function_name: str) -> Dict[str, Any]:
+    """Decompile a specific function from a binary to C pseudocode via Ghidra."""
+    tool = _get_ghidra()
+    if not tool.is_available():
+        return {
+            "success": False,
+            "error": (
+                "Ghidra is not installed or not found. "
+                "Install at /opt/ghidra or set GHIDRA_PATH environment variable."
+            ),
+            "c_code": None,
+        }
+    return tool.decompile_function(binary_path, function_name)
+
+
+def find_vulnerabilities(binary_path: str) -> Dict[str, Any]:
+    """Scan a binary for dangerous functions and potential vulnerabilities."""
+    tool = _get_ghidra()
+    if not tool.is_available():
+        return {
+            "success": False,
+            "error": (
+                "Ghidra is not installed or not found. "
+                "Install at /opt/ghidra or set GHIDRA_PATH environment variable."
+            ),
+            "severity_score": 0,
+        }
+    return tool.find_vulnerabilities(binary_path)
+
+
+def compare_binaries(binary_a: str, binary_b: str) -> Dict[str, Any]:
+    """Compare two binaries and report differences in functions and strings."""
+    tool = _get_ghidra()
+    if not tool.is_available():
+        return {"success": False, "error": "Ghidra is not installed or not found.", "similarity_score": 0.0}
+    return tool.compare_binaries(binary_a, binary_b)
 
 # ---------------------------------------------------------------------------
 # Tool definitions (OpenAI function calling format)
@@ -408,6 +509,179 @@ TOOL_DEFINITIONS: List[Dict[str, Any]] = [
             },
         },
     },
+    # -- Document conversion tools (MarkItDown) -----------------------------
+    {
+        "type": "function",
+        "function": {
+            "name": "convert_document",
+            "description": (
+                "Convert a document to Markdown. Supports 20+ formats: PDF, DOCX, "
+                "PPTX, XLSX, HTML, CSV, JSON, XML, ZIP, EPUB, images (OCR), audio "
+                "(transcription), and plain text. Returns the markdown text, document "
+                "title, and output path if written to disk."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "file_path": {
+                        "type": "string",
+                        "description": "Absolute or relative path to the document file",
+                    },
+                    "output_path": {
+                        "type": "string",
+                        "description": "Optional path to write the Markdown output",
+                    },
+                },
+                "required": ["file_path"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "batch_convert_documents",
+            "description": (
+                "Convert all supported documents in a directory (recursively) to "
+                "Markdown. Returns the number converted, failed, and skipped, plus "
+                "per-file results."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "directory": {
+                        "type": "string",
+                        "description": "Root directory to scan for convertible files",
+                    },
+                    "output_dir": {
+                        "type": "string",
+                        "description": "Directory where Markdown outputs will be written",
+                    },
+                },
+                "required": ["directory", "output_dir"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "extract_document_structure",
+            "description": (
+                "Extract structure from a document: headings, tables, lists, "
+                "word count, and character count. Useful for understanding document "
+                "organization without reading the full content."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "file_path": {
+                        "type": "string",
+                        "description": "Path to the document to analyze",
+                    },
+                },
+                "required": ["file_path"],
+            },
+        },
+    },
+    # -- Binary analysis tools (Ghidra) --------------------------------------
+    {
+        "type": "function",
+        "function": {
+            "name": "analyze_binary",
+            "description": (
+                "Analyze a binary executable with NSA Ghidra. Returns functions, "
+                "strings, memory sections, imports, and metadata. Requires Ghidra "
+                "to be installed separately at /opt/ghidra or a custom path."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "binary_path": {
+                        "type": "string",
+                        "description": "Absolute path to the binary file to analyze",
+                    },
+                    "project_name": {
+                        "type": "string",
+                        "description": "Name for the temporary Ghidra project",
+                        "default": "construct_analysis",
+                    },
+                },
+                "required": ["binary_path"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "decompile_function",
+            "description": (
+                "Decompile a specific function from a binary to C pseudocode using "
+                "Ghidra's decompiler. Returns the C code, function signature, and "
+                "entry address. Requires Ghidra to be installed."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "binary_path": {
+                        "type": "string",
+                        "description": "Path to the binary file",
+                    },
+                    "function_name": {
+                        "type": "string",
+                        "description": "Name of the function to decompile (e.g., main)",
+                    },
+                },
+                "required": ["binary_path", "function_name"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "find_vulnerabilities",
+            "description": (
+                "Scan a binary for potential security vulnerabilities. Detects "
+                "dangerous function calls (strcpy, sprintf, gets, system, etc.), "
+                "suspicious strings, and missing protections (NX, canary, PIE, RELRO). "
+                "Returns a severity score (0-100) and actionable recommendations. "
+                "Requires Ghidra to be installed."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "binary_path": {
+                        "type": "string",
+                        "description": "Path to the binary file to scan",
+                    },
+                },
+                "required": ["binary_path"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compare_binaries",
+            "description": (
+                "Compare two binaries and report differences in functions, strings, "
+                "and metadata. Returns a similarity score (0.0 to 1.0) and lists of "
+                "functions/strings unique to each binary. Requires Ghidra to be installed."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "binary_a": {
+                        "type": "string",
+                        "description": "Path to the first binary",
+                    },
+                    "binary_b": {
+                        "type": "string",
+                        "description": "Path to the second binary",
+                    },
+                },
+                "required": ["binary_a", "binary_b"],
+            },
+        },
+    },
     # -- Code tools ---------------------------------------------------------
     {
         "type": "function",
@@ -540,6 +814,15 @@ _TOOL_FUNCTIONS: Dict[str, Callable] = {
     "git_branch": git_branch,
     "git_log": git_log,
     "git_checkout": git_checkout,
+    # Document conversion tools
+    "convert_document": convert_document,
+    "batch_convert_documents": batch_convert_documents,
+    "extract_document_structure": extract_document_structure,
+    # Binary analysis tools
+    "analyze_binary": analyze_binary,
+    "decompile_function": decompile_function,
+    "find_vulnerabilities": find_vulnerabilities,
+    "compare_binaries": compare_binaries,
     # Code tools
     "parse_ast": parse_ast,
     "find_references": find_references,
