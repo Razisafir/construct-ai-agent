@@ -24,7 +24,7 @@ export function GlowButton({
   type = "button",
 }: GlowButtonProps) {
   const base =
-    "relative inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-construct-accent/50 overflow-hidden";
+    "relative inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-construct-accent-primary/50 overflow-hidden";
 
   const sizeClasses = {
     sm: "h-7 px-3 text-xs rounded-lg",
@@ -34,13 +34,13 @@ export function GlowButton({
 
   const variantClasses = {
     primary:
-      "bg-gradient-to-r from-construct-accent to-[#74c7ec] text-construct-panel shadow-[0_0_20px_rgba(137,180,250,0.3)] hover:shadow-[0_0_30px_rgba(137,180,250,0.5)] hover:brightness-110 active:scale-[0.98]",
+      "bg-gradient-to-r from-construct-accent-primary to-construct-accent-secondary text-white shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] hover:brightness-110 active:scale-[0.98]",
     secondary:
-      "bg-[rgba(255,255,255,0.06)] text-construct-text border border-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.18)] active:scale-[0.98]",
+      "bg-[rgba(255,255,255,0.06)] text-construct-text-primary border border-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.18)] active:scale-[0.98]",
     danger:
-      "bg-gradient-to-r from-construct-error to-[#eba0ac] text-construct-panel shadow-[0_0_20px_rgba(243,139,168,0.3)] hover:shadow-[0_0_30px_rgba(243,139,168,0.5)] hover:brightness-110 active:scale-[0.98]",
+      "bg-gradient-to-r from-construct-semantic-error to-[#f87171] text-white shadow-[0_0_20px_rgba(239,68,68,0.3)] hover:shadow-[0_0_30px_rgba(239,68,68,0.5)] hover:brightness-110 active:scale-[0.98]",
     ghost:
-      "bg-transparent text-construct-textMuted hover:text-construct-text hover:bg-[rgba(255,255,255,0.04)] active:scale-[0.98]",
+      "bg-transparent text-construct-text-muted hover:text-construct-text-primary hover:bg-[rgba(255,255,255,0.04)] active:scale-[0.98]",
   };
 
   const isDisabled = disabled || loading;

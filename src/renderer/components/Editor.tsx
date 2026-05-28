@@ -37,14 +37,14 @@ function Editor() {
   return (
     <div className="w-full h-full">
       {/* Tab Bar */}
-      <div className="flex items-center h-9 bg-construct-panel border-b border-construct-border overflow-x-auto">
-        <div className="flex items-center h-full px-3 min-w-fit bg-construct-bg border-r border-construct-border">
-          <span className="text-xs text-construct-text mr-2">App.tsx</span>
-          <span className="text-construct-textMuted hover:text-construct-text cursor-pointer text-xs">
+      <div className="flex items-center h-9 bg-construct-bg-primary-tertiary border-b border-construct-border overflow-x-auto">
+        <div className="flex items-center h-full px-3 min-w-fit bg-construct-bg-primary border-r border-construct-border">
+          <span className="text-xs text-construct-text-primary mr-2">App.tsx</span>
+          <span className="text-construct-text-muted hover:text-construct-text-primary cursor-pointer text-xs">
             ×
           </span>
         </div>
-        <div className="flex items-center h-full px-3 min-w-fit border-r border-construct-border text-construct-textMuted hover:bg-construct-hover cursor-pointer transition-colors">
+        <div className="flex items-center h-full px-3 min-w-fit border-r border-construct-border text-construct-text-muted hover:bg-construct-bg-primary-elevated cursor-pointer transition-colors">
           <span className="text-xs">main.tsx</span>
         </div>
       </div>
@@ -84,7 +84,7 @@ function Editor() {
             smoothScrolling: true,
           }}
           loading={
-            <div className="flex items-center justify-center w-full h-full text-construct-textMuted text-xs">
+            <div className="flex items-center justify-center w-full h-full text-construct-text-muted text-xs">
               Loading editor...
             </div>
           }

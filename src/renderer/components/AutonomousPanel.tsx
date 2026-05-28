@@ -33,7 +33,7 @@ import type {
 /* ───────────────────────── styles ───────────────────────── */
 
 const glassCard =
-  "bg-construct-panel/60 backdrop-blur-md border border-construct-border/50 rounded-lg";
+  "bg-construct-bg-primary-tertiary/60 backdrop-blur-md border border-construct-border/50 rounded-lg";
 
 const glowAccent = {
   boxShadow:
@@ -64,7 +64,7 @@ function ProgressRing({
         cy={size / 2}
         r={radius}
         fill="none"
-        stroke="#313244"
+        stroke="#22222f"
         strokeWidth={strokeWidth}
       />
       <circle
@@ -72,7 +72,7 @@ function ProgressRing({
         cy={size / 2}
         r={radius}
         fill="none"
-        stroke="#89b4fa"
+        stroke="#6366f1"
         strokeWidth={strokeWidth}
         strokeDasharray={circumference}
         strokeDashoffset={offset}
@@ -86,7 +86,7 @@ function ProgressRing({
 function ResourceBar({
   label,
   percent,
-  color = "bg-construct-accent",
+  color = "bg-construct-accent-primary",
   icon,
 }: {
   label: string;
@@ -97,9 +97,9 @@ function ResourceBar({
   return (
     <div className="flex items-center gap-2">
       {icon && (
-        <span className="text-construct-textMuted w-4">{icon}</span>
+        <span className="text-construct-text-muted w-4">{icon}</span>
       )}
-      <span className="text-[10px] text-construct-textMuted w-10">
+      <span className="text-[10px] text-construct-text-muted w-10">
         {label}
       </span>
       <div className="flex-1 h-2 bg-construct-border/40 rounded-full overflow-hidden">
@@ -108,7 +108,7 @@ function ResourceBar({
           style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
         />
       </div>
-      <span className="text-[10px] text-construct-textMuted w-8 text-right">
+      <span className="text-[10px] text-construct-text-muted w-8 text-right">
         {Math.round(percent)}%
       </span>
     </div>
@@ -135,7 +135,7 @@ function ToggleSwitch({
     <button
       onClick={() => onChange(!enabled)}
       className={`relative ${s.w} ${s.h} rounded-full transition-colors duration-300 ${
-        enabled ? "bg-construct-accent" : "bg-construct-border"
+        enabled ? "bg-construct-accent-primary" : "bg-construct-border"
       }`}
     >
       <span
@@ -159,22 +159,22 @@ function SafetyCheckbox({
     >
       <div className="mt-0.5">
         {setting.enabled ? (
-          <ShieldCheck size={14} className="text-construct-success" />
+          <ShieldCheck size={14} className="text-construct-semantic-success" />
         ) : (
-          <Shield size={14} className="text-construct-textMuted group-hover:text-construct-text" />
+          <Shield size={14} className="text-construct-text-muted group-hover:text-construct-text-primary" />
         )}
       </div>
       <div className="flex-1 min-w-0">
         <div
           className={`text-[11px] leading-tight ${
             setting.enabled
-              ? "text-construct-text"
-              : "text-construct-textMuted group-hover:text-construct-text"
+              ? "text-construct-text-primary"
+              : "text-construct-text-muted group-hover:text-construct-text-primary"
           }`}
         >
           {setting.label}
         </div>
-        <div className="text-[10px] text-construct-textMuted/70 leading-tight mt-0.5">
+        <div className="text-[10px] text-construct-text-muted/70 leading-tight mt-0.5">
           {setting.description}
         </div>
       </div>
@@ -192,9 +192,9 @@ function TerminalOutput({ logs }: { logs: LogEntry[] }) {
   }, [logs]);
 
   const levelColors: Record<string, string> = {
-    info: "text-construct-text",
-    warn: "text-construct-warning",
-    error: "text-construct-error",
+    info: "text-construct-text-primary",
+    warn: "text-construct-semantic-warning",
+    error: "text-construct-semantic-error",
   };
 
   const levelIcons: Record<string, string> = {
@@ -209,49 +209,49 @@ function TerminalOutput({ logs }: { logs: LogEntry[] }) {
       className="font-mono text-[10px] leading-relaxed h-40 overflow-y-auto space-y-0.5 pr-1 scrollbar-thin"
     >
       {logs.map((log, i) => (
-        <div key={i} className={`${levelColors[log.level] || "text-construct-text"} flex gap-1.5`}>
-          <span className="text-construct-textMuted/50 select-none shrink-0">
+        <div key={i} className={`${levelColors[log.level] || "text-construct-text-primary"} flex gap-1.5`}>
+          <span className="text-construct-text-muted/50 select-none shrink-0">
             {levelIcons[log.level] || ">"}
           </span>
           <span className="break-all">{log.message}</span>
         </div>
       ))}
-      <div className="text-construct-accent animate-pulse">_</div>
+      <div className="text-construct-accent-primary animate-pulse">_</div>
     </div>
   );
 }
 
 function GoalQueueItem({ goal }: { goal: QueuedGoal }) {
   const priorityColors: Record<GoalPriority, string> = {
-    critical: "text-construct-error",
-    high: "text-construct-warning",
-    normal: "text-construct-accent",
-    low: "text-construct-textMuted",
+    critical: "text-construct-semantic-error",
+    high: "text-construct-semantic-warning",
+    normal: "text-construct-accent-primary",
+    low: "text-construct-text-muted",
   };
 
   const statusIcon =
     goal.status === "completed" ? (
-      <CheckCircle2 size={14} className="text-construct-success shrink-0" />
+      <CheckCircle2 size={14} className="text-construct-semantic-success shrink-0" />
     ) : goal.status === "active" ? (
-      <Activity size={14} className="text-construct-accent shrink-0 animate-pulse" />
+      <Activity size={14} className="text-construct-accent-primary shrink-0 animate-pulse" />
     ) : (
-      <Circle size={14} className="text-construct-textMuted/50 shrink-0" />
+      <Circle size={14} className="text-construct-text-muted/50 shrink-0" />
     );
 
   return (
     <div
       className={`flex items-center gap-2 py-1.5 px-2 rounded-md ${
-        goal.status === "active" ? "bg-construct-accent/5 border border-construct-accent/20" : ""
+        goal.status === "active" ? "bg-construct-accent-primary/5 border border-construct-accent-primary/20" : ""
       }`}
     >
       {statusIcon}
-      <span className="flex-1 text-[11px] text-construct-text truncate">
+      <span className="flex-1 text-[11px] text-construct-text-primary truncate">
         {goal.description}
       </span>
       <span className={`text-[9px] uppercase tracking-wider ${priorityColors[goal.priority]}`}>
         {goal.priority}
       </span>
-      <span className="text-[10px] text-construct-textMuted w-16 text-right">
+      <span className="text-[10px] text-construct-text-muted w-16 text-right">
         {goal.status}
       </span>
     </div>
@@ -261,32 +261,32 @@ function GoalQueueItem({ goal }: { goal: QueuedGoal }) {
 function StatusBadge({ status }: { status: AutonomousStatus }) {
   const config: Record<AutonomousStatus, { color: string; icon: React.ReactNode; label: string }> = {
     disabled: {
-      color: "bg-construct-textMuted/20 text-construct-textMuted",
+      color: "bg-construct-text-muted/20 text-construct-text-muted",
       icon: <Zap size={12} />,
       label: "DISABLED",
     },
     idle: {
-      color: "bg-construct-accent/20 text-construct-accent",
+      color: "bg-construct-accent-primary/20 text-construct-accent-primary",
       icon: <Bot size={12} />,
       label: "IDLE",
     },
     running: {
-      color: "bg-construct-success/20 text-construct-success",
+      color: "bg-construct-semantic-success/20 text-construct-semantic-success",
       icon: <Radio size={12} className="animate-pulse" />,
       label: "ACTIVE",
     },
     paused: {
-      color: "bg-construct-warning/20 text-construct-warning",
+      color: "bg-construct-semantic-warning/20 text-construct-semantic-warning",
       icon: <Pause size={12} />,
       label: "PAUSED",
     },
     throttled: {
-      color: "bg-construct-warning/20 text-construct-warning",
+      color: "bg-construct-semantic-warning/20 text-construct-semantic-warning",
       icon: <AlertTriangle size={12} />,
       label: "THROTTLED",
     },
     error: {
-      color: "bg-construct-error/20 text-construct-error",
+      color: "bg-construct-semantic-error/20 text-construct-semantic-error",
       icon: <ShieldAlert size={12} />,
       label: "ERROR",
     },
@@ -510,17 +510,17 @@ function AutonomousPanel() {
         >
           {/* Header */}
           <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center gap-2 text-construct-accent">
+            <div className="flex items-center gap-2 text-construct-accent-primary">
               <Sparkles size={20} />
               <span className="text-xs font-semibold tracking-[0.2em] uppercase">
                 Construct
               </span>
               <Sparkles size={20} />
             </div>
-            <h2 className="text-lg font-bold text-construct-text tracking-tight">
+            <h2 className="text-lg font-bold text-construct-text-primary tracking-tight">
               Autonomous Mode
             </h2>
-            <p className="text-[11px] text-construct-textMuted text-center leading-relaxed max-w-xs">
+            <p className="text-[11px] text-construct-text-muted text-center leading-relaxed max-w-xs">
               Let the agent work 24/7 toward your goals. It plans, codes, tests,
               and commits — even while you sleep.
             </p>
@@ -528,13 +528,13 @@ function AutonomousPanel() {
 
           {/* Big Toggle */}
           <div className="flex flex-col items-center gap-3 py-2">
-            <span className="text-[10px] text-construct-textMuted uppercase tracking-wider">
+            <span className="text-[10px] text-construct-text-muted uppercase tracking-wider">
               Autonomous Mode
             </span>
             <div className="flex items-center gap-3">
               <span
                 className={`text-xs font-semibold ${
-                  enabled ? "text-construct-accent" : "text-construct-textMuted"
+                  enabled ? "text-construct-accent-primary" : "text-construct-text-muted"
                 }`}
               >
                 OFF
@@ -542,7 +542,7 @@ function AutonomousPanel() {
               <ToggleSwitch enabled={enabled} onChange={handleToggle} size="lg" />
               <span
                 className={`text-xs font-semibold ${
-                  enabled ? "text-construct-success" : "text-construct-textMuted"
+                  enabled ? "text-construct-semantic-success" : "text-construct-text-muted"
                 }`}
               >
                 ON
@@ -552,7 +552,7 @@ function AutonomousPanel() {
 
           {/* Features */}
           <div className="w-full space-y-2">
-            <div className="text-[10px] text-construct-textMuted uppercase tracking-wider mb-2">
+            <div className="text-[10px] text-construct-text-muted uppercase tracking-wider mb-2">
               Features
             </div>
             {[
@@ -563,8 +563,8 @@ function AutonomousPanel() {
               "Smart safety pauses for destructive actions",
             ].map((feature, i) => (
               <div key={i} className="flex items-center gap-2">
-                <CheckCircle2 size={12} className="text-construct-success shrink-0" />
-                <span className="text-[11px] text-construct-text">{feature}</span>
+                <CheckCircle2 size={12} className="text-construct-semantic-success shrink-0" />
+                <span className="text-[11px] text-construct-text-primary">{feature}</span>
               </div>
             ))}
           </div>
@@ -582,7 +582,7 @@ function AutonomousPanel() {
         <div className="flex items-center gap-3">
           <StatusBadge status={status} />
           {status === "running" && (
-            <span className="text-[10px] text-construct-textMuted animate-pulse">
+            <span className="text-[10px] text-construct-text-muted animate-pulse">
               Working on: {currentGoal}
             </span>
           )}
@@ -604,21 +604,21 @@ function AutonomousPanel() {
             <div className="relative">
               <ProgressRing percent={progress} size={110} strokeWidth={8} />
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-xl font-bold text-construct-text">
+                <span className="text-xl font-bold text-construct-text-primary">
                   {Math.round(progress)}%
                 </span>
-                <span className="text-[9px] text-construct-textMuted uppercase tracking-wider">
+                <span className="text-[9px] text-construct-text-muted uppercase tracking-wider">
                   progress
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-3 text-[10px] text-construct-textMuted">
+            <div className="flex items-center gap-3 text-[10px] text-construct-text-muted">
               <div className="flex items-center gap-1">
-                <CheckCircle2 size={10} className="text-construct-success" />
+                <CheckCircle2 size={10} className="text-construct-semantic-success" />
                 <span>{tasksCompleted} done</span>
               </div>
               <div className="flex items-center gap-1">
-                <Save size={10} className="text-construct-accent" />
+                <Save size={10} className="text-construct-accent-primary" />
                 <span>{checkpoints} CPs</span>
               </div>
             </div>
@@ -626,16 +626,16 @@ function AutonomousPanel() {
 
           {/* Goal Card */}
           <div className={`${glassCard} p-3`}>
-            <div className="flex items-center gap-1.5 text-construct-accent mb-2">
+            <div className="flex items-center gap-1.5 text-construct-accent-primary mb-2">
               <ChevronRight size={12} />
               <span className="text-[10px] font-semibold uppercase tracking-wider">
                 Current Goal
               </span>
             </div>
-            <p className="text-[11px] text-construct-text leading-relaxed">
+            <p className="text-[11px] text-construct-text-primary leading-relaxed">
               {currentGoal || "No active goal"}
             </p>
-            <div className="flex items-center gap-1.5 mt-2 text-[10px] text-construct-textMuted">
+            <div className="flex items-center gap-1.5 mt-2 text-[10px] text-construct-text-muted">
               <Clock size={10} />
               <span>Started {new Date(Date.now() - 1000 * 60 * 15).toLocaleTimeString()}</span>
             </div>
@@ -646,7 +646,7 @@ function AutonomousPanel() {
             {status === "running" ? (
               <button
                 onClick={handlePause}
-                className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-construct-warning/10 hover:bg-construct-warning/20 text-construct-warning text-[10px] font-medium transition-colors"
+                className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-construct-semantic-warning/10 hover:bg-construct-semantic-warning/20 text-construct-semantic-warning text-[10px] font-medium transition-colors"
               >
                 <Pause size={12} />
                 Pause
@@ -654,7 +654,7 @@ function AutonomousPanel() {
             ) : (
               <button
                 onClick={handleResume}
-                className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-construct-success/10 hover:bg-construct-success/20 text-construct-success text-[10px] font-medium transition-colors"
+                className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-construct-semantic-success/10 hover:bg-construct-semantic-success/20 text-construct-semantic-success text-[10px] font-medium transition-colors"
               >
                 <Play size={12} />
                 Resume
@@ -662,14 +662,14 @@ function AutonomousPanel() {
             )}
             <button
               onClick={handleStop}
-              className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-construct-error/10 hover:bg-construct-error/20 text-construct-error text-[10px] font-medium transition-colors"
+              className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-construct-semantic-error/10 hover:bg-construct-semantic-error/20 text-construct-semantic-error text-[10px] font-medium transition-colors"
             >
               <Square size={12} />
               Stop
             </button>
             <button
               onClick={handleCheckpoint}
-              className="col-span-2 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-construct-accent/10 hover:bg-construct-accent/20 text-construct-accent text-[10px] font-medium transition-colors"
+              className="col-span-2 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-construct-accent-primary/10 hover:bg-construct-accent-primary/20 text-construct-accent-primary text-[10px] font-medium transition-colors"
             >
               <Save size={12} />
               Force Checkpoint
@@ -681,12 +681,12 @@ function AutonomousPanel() {
         <div className="flex flex-col gap-2 min-h-0">
           {/* Task Queue */}
           <div className={`${glassCard} p-3`}>
-            <div className="flex items-center gap-1.5 text-construct-accent mb-2">
+            <div className="flex items-center gap-1.5 text-construct-accent-primary mb-2">
               <FileCode2 size={12} />
               <span className="text-[10px] font-semibold uppercase tracking-wider">
                 Task Queue
               </span>
-              <span className="text-[10px] text-construct-textMuted ml-auto">
+              <span className="text-[10px] text-construct-text-muted ml-auto">
                 {goals.filter((g) => g.status === "completed").length}/{goals.length}
               </span>
             </div>
@@ -699,7 +699,7 @@ function AutonomousPanel() {
 
           {/* Resources */}
           <div className={`${glassCard} p-3`}>
-            <div className="flex items-center gap-1.5 text-construct-accent mb-2">
+            <div className="flex items-center gap-1.5 text-construct-accent-primary mb-2">
               <Cpu size={12} />
               <span className="text-[10px] font-semibold uppercase tracking-wider">
                 Resources
@@ -709,13 +709,13 @@ function AutonomousPanel() {
               <ResourceBar
                 label="CPU"
                 percent={cpuUsage}
-                color={cpuUsage > 50 ? "bg-construct-warning" : "bg-construct-accent"}
+                color={cpuUsage > 50 ? "bg-construct-semantic-warning" : "bg-construct-accent-primary"}
                 icon={<Cpu size={10} />}
               />
               <ResourceBar
                 label="Mem"
                 percent={memUsage}
-                color={memUsage > 50 ? "bg-construct-warning" : "bg-construct-success"}
+                color={memUsage > 50 ? "bg-construct-semantic-warning" : "bg-construct-semantic-success"}
                 icon={<HardDrive size={10} />}
               />
             </div>
@@ -723,14 +723,14 @@ function AutonomousPanel() {
 
           {/* Terminal Output */}
           <div className={`${glassCard} p-3 flex-1 min-h-0`}>
-            <div className="flex items-center gap-1.5 text-construct-accent mb-2">
+            <div className="flex items-center gap-1.5 text-construct-accent-primary mb-2">
               <Terminal size={12} />
               <span className="text-[10px] font-semibold uppercase tracking-wider">
                 Live Output
               </span>
               {status === "running" && (
-                <span className="ml-auto flex items-center gap-1 text-[9px] text-construct-success">
-                  <span className="w-1.5 h-1.5 rounded-full bg-construct-success animate-pulse" />
+                <span className="ml-auto flex items-center gap-1 text-[9px] text-construct-semantic-success">
+                  <span className="w-1.5 h-1.5 rounded-full bg-construct-semantic-success animate-pulse" />
                   LIVE
                 </span>
               )}
@@ -742,7 +742,7 @@ function AutonomousPanel() {
 
       {/* Bottom: Safety Settings */}
       <div className={`${glassCard} p-3`}>
-        <div className="flex items-center gap-1.5 text-construct-accent mb-2">
+        <div className="flex items-center gap-1.5 text-construct-accent-primary mb-2">
           <Shield size={12} />
           <span className="text-[10px] font-semibold uppercase tracking-wider">
             Safety Settings
@@ -761,33 +761,33 @@ function AutonomousPanel() {
         {/* Limits */}
         <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-construct-border/30">
           <div>
-            <div className="text-[10px] text-construct-textMuted mb-1">CPU Limit</div>
+            <div className="text-[10px] text-construct-text-muted mb-1">CPU Limit</div>
             <div className="flex items-center gap-2">
               <div className="flex-1 h-1.5 bg-construct-border/40 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-construct-accent rounded-full"
+                  className="h-full bg-construct-accent-primary rounded-full"
                   style={{ width: `${cpuLimit}%` }}
                 />
               </div>
-              <span className="text-[10px] text-construct-textMuted w-8">{cpuLimit}%</span>
+              <span className="text-[10px] text-construct-text-muted w-8">{cpuLimit}%</span>
             </div>
           </div>
           <div>
-            <div className="text-[10px] text-construct-textMuted mb-1">Memory Limit</div>
+            <div className="text-[10px] text-construct-text-muted mb-1">Memory Limit</div>
             <div className="flex items-center gap-2">
               <div className="flex-1 h-1.5 bg-construct-border/40 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-construct-success rounded-full"
+                  className="h-full bg-construct-semantic-success rounded-full"
                   style={{ width: `${(memLimit / 4096) * 100}%` }}
                 />
               </div>
-              <span className="text-[10px] text-construct-textMuted w-10">{memLimit} MB</span>
+              <span className="text-[10px] text-construct-text-muted w-10">{memLimit} MB</span>
             </div>
           </div>
           <div>
-            <div className="text-[10px] text-construct-textMuted mb-1">Checkpoint Interval</div>
-            <div className="flex items-center gap-1 text-[10px] text-construct-text">
-              <GitBranch size={10} className="text-construct-accent" />
+            <div className="text-[10px] text-construct-text-muted mb-1">Checkpoint Interval</div>
+            <div className="flex items-center gap-1 text-[10px] text-construct-text-primary">
+              <GitBranch size={10} className="text-construct-accent-primary" />
               Every 5 minutes
             </div>
           </div>
@@ -810,11 +810,11 @@ function AutonomousPanel() {
           background: transparent;
         }
         .scrollbar-thin::-webkit-scrollbar-thumb {
-          background: #313244;
+          background: #22222f;
           border-radius: 2px;
         }
         .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-          background: #45475a;
+          background: #3a3a4f;
         }
       `}</style>
     </div>

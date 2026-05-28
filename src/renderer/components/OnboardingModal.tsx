@@ -112,7 +112,7 @@ const OnboardingModal: React.FC = () => {
         {/* Skip button */}
         <button
           onClick={handleSkip}
-          className="absolute top-4 right-4 flex items-center gap-1.5 text-xs text-construct-textMuted hover:text-construct-text transition-colors z-10"
+          className="absolute top-4 right-4 flex items-center gap-1.5 text-xs text-construct-text-muted hover:text-construct-text-primary transition-colors z-10"
         >
           Skip
           <SkipForward className="w-3.5 h-3.5" />
@@ -136,21 +136,21 @@ const OnboardingModal: React.FC = () => {
                 <div className="flex flex-col items-center text-center space-y-6">
                   {/* Animated Logo */}
                   <div className="relative">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-construct-accent/20 to-construct-accent/5 border border-construct-accent/30 flex items-center justify-center pulse-glow">
-                      <span className="text-3xl font-bold text-construct-accent">
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-construct-accent-primary/20 to-construct-accent-primary/5 border border-construct-accent-primary/30 flex items-center justify-center pulse-glow">
+                      <span className="text-3xl font-bold text-construct-accent-primary">
                         C
                       </span>
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-construct-accent/20 border border-construct-accent/30 flex items-center justify-center">
-                      <Sparkles className="w-3.5 h-3.5 text-construct-accent" />
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-construct-accent-primary/20 border border-construct-accent-primary/30 flex items-center justify-center">
+                      <Sparkles className="w-3.5 h-3.5 text-construct-accent-primary" />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <h1 className="text-2xl font-bold text-construct-text">
+                    <h1 className="text-2xl font-bold text-construct-text-primary">
                       Welcome to Construct
                     </h1>
-                    <p className="text-sm text-construct-textMuted leading-relaxed max-w-xs mx-auto">
+                    <p className="text-sm text-construct-text-muted leading-relaxed max-w-xs mx-auto">
                       Your AI-powered development companion. Let&apos;s get you
                       set up in just a few steps.
                     </p>
@@ -163,7 +163,7 @@ const OnboardingModal: React.FC = () => {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 + i * 0.1 }}
-                        className="px-3 py-1 rounded-full text-xs font-medium bg-construct-accent/10 text-construct-accent border border-construct-accent/20"
+                        className="px-3 py-1 rounded-full text-xs font-medium bg-construct-accent-primary/10 text-construct-accent-primary border border-construct-accent-primary/20"
                       >
                         {item}
                       </motion.span>
@@ -176,14 +176,14 @@ const OnboardingModal: React.FC = () => {
               {step === 1 && (
                 <div className="flex flex-col space-y-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-construct-accent/10 flex items-center justify-center">
-                      <Target className="w-5 h-5 text-construct-accent" />
+                    <div className="w-10 h-10 rounded-xl bg-construct-accent-primary/10 flex items-center justify-center">
+                      <Target className="w-5 h-5 text-construct-accent-primary" />
                     </div>
                     <div>
-                      <h2 className="text-lg font-semibold text-construct-text">
+                      <h2 className="text-lg font-semibold text-construct-text-primary">
                         Set Your First Goal
                       </h2>
-                      <p className="text-xs text-construct-textMuted">
+                      <p className="text-xs text-construct-text-muted">
                         What would you like to build or accomplish?
                       </p>
                     </div>
@@ -193,11 +193,11 @@ const OnboardingModal: React.FC = () => {
                     value={goal}
                     onChange={(e) => setGoal(e.target.value)}
                     placeholder="Describe your project or goal..."
-                    className="w-full h-24 px-4 py-3 rounded-xl bg-construct-bg/60 border border-construct-border/50 text-sm text-construct-text placeholder:text-construct-textMuted/50 focus:outline-none focus:border-construct-accent/50 focus:ring-1 focus:ring-construct-accent/20 resize-none transition-all"
+                    className="w-full h-24 px-4 py-3 rounded-xl bg-construct-bg-primary/60 border border-construct-border/50 text-sm text-construct-text-primary placeholder:text-construct-text-muted/50 focus:outline-none focus:border-construct-accent-primary/50 focus:ring-1 focus:ring-construct-accent-primary/20 resize-none transition-all"
                   />
 
                   <div className="space-y-2">
-                    <p className="text-xs text-construct-textMuted font-medium">
+                    <p className="text-xs text-construct-text-muted font-medium">
                       Or pick an example:
                     </p>
                     <div className="grid grid-cols-1 gap-2">
@@ -207,8 +207,8 @@ const OnboardingModal: React.FC = () => {
                           onClick={() => setGoal(example)}
                           className={`text-left px-3 py-2.5 rounded-lg text-xs transition-all border ${
                             goal === example
-                              ? "bg-construct-accent/10 border-construct-accent/30 text-construct-accent"
-                              : "bg-construct-bg/40 border-construct-border/30 text-construct-textMuted hover:bg-construct-bg/60 hover:text-construct-text"
+                              ? "bg-construct-accent-primary/10 border-construct-accent-primary/30 text-construct-accent-primary"
+                              : "bg-construct-bg-primary/40 border-construct-border/30 text-construct-text-muted hover:bg-construct-bg-primary/60 hover:text-construct-text-primary"
                           }`}
                         >
                           {example}
@@ -223,14 +223,14 @@ const OnboardingModal: React.FC = () => {
               {step === 2 && (
                 <div className="flex flex-col space-y-5">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-construct-accent/10 flex items-center justify-center">
-                      <KeyRound className="w-5 h-5 text-construct-accent" />
+                    <div className="w-10 h-10 rounded-xl bg-construct-accent-primary/10 flex items-center justify-center">
+                      <KeyRound className="w-5 h-5 text-construct-accent-primary" />
                     </div>
                     <div>
-                      <h2 className="text-lg font-semibold text-construct-text">
+                      <h2 className="text-lg font-semibold text-construct-text-primary">
                         Configure API Keys
                       </h2>
-                      <p className="text-xs text-construct-textMuted">
+                      <p className="text-xs text-construct-text-muted">
                         Add your AI provider API keys (optional for now)
                       </p>
                     </div>
@@ -241,13 +241,13 @@ const OnboardingModal: React.FC = () => {
                     <div className="rounded-xl border border-construct-border/40 overflow-hidden">
                       <button
                         onClick={() => toggleSection("openai")}
-                        className="w-full flex items-center justify-between px-4 py-3 text-sm text-construct-text hover:bg-white/[0.02] transition-colors"
+                        className="w-full flex items-center justify-between px-4 py-3 text-sm text-construct-text-primary hover:bg-white/[0.02] transition-colors"
                       >
                         <span className="font-medium">OpenAI</span>
                         {expandedSection === "openai" ? (
-                          <ChevronUp className="w-4 h-4 text-construct-textMuted" />
+                          <ChevronUp className="w-4 h-4 text-construct-text-muted" />
                         ) : (
-                          <ChevronDown className="w-4 h-4 text-construct-textMuted" />
+                          <ChevronDown className="w-4 h-4 text-construct-text-muted" />
                         )}
                       </button>
                       <AnimatePresence>
@@ -266,7 +266,7 @@ const OnboardingModal: React.FC = () => {
                                   value={openAiKey}
                                   onChange={(e) => setOpenAiKey(e.target.value)}
                                   placeholder="sk-..."
-                                  className="w-full px-3 py-2 rounded-lg bg-construct-bg/60 border border-construct-border/50 text-xs text-construct-text placeholder:text-construct-textMuted/50 focus:outline-none focus:border-construct-accent/50 pr-8"
+                                  className="w-full px-3 py-2 rounded-lg bg-construct-bg-primary/60 border border-construct-border/50 text-xs text-construct-text-primary placeholder:text-construct-text-muted/50 focus:outline-none focus:border-construct-accent-primary/50 pr-8"
                                 />
                                 <button
                                   onClick={() =>
@@ -275,7 +275,7 @@ const OnboardingModal: React.FC = () => {
                                       openai: !p.openai,
                                     }))
                                   }
-                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-construct-textMuted hover:text-construct-text"
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-construct-text-muted hover:text-construct-text-primary"
                                 >
                                   {showKeys.openai ? (
                                     <EyeOff className="w-3.5 h-3.5" />
@@ -294,13 +294,13 @@ const OnboardingModal: React.FC = () => {
                     <div className="rounded-xl border border-construct-border/40 overflow-hidden">
                       <button
                         onClick={() => toggleSection("anthropic")}
-                        className="w-full flex items-center justify-between px-4 py-3 text-sm text-construct-text hover:bg-white/[0.02] transition-colors"
+                        className="w-full flex items-center justify-between px-4 py-3 text-sm text-construct-text-primary hover:bg-white/[0.02] transition-colors"
                       >
                         <span className="font-medium">Anthropic</span>
                         {expandedSection === "anthropic" ? (
-                          <ChevronUp className="w-4 h-4 text-construct-textMuted" />
+                          <ChevronUp className="w-4 h-4 text-construct-text-muted" />
                         ) : (
-                          <ChevronDown className="w-4 h-4 text-construct-textMuted" />
+                          <ChevronDown className="w-4 h-4 text-construct-text-muted" />
                         )}
                       </button>
                       <AnimatePresence>
@@ -323,7 +323,7 @@ const OnboardingModal: React.FC = () => {
                                     setAnthropicKey(e.target.value)
                                   }
                                   placeholder="sk-ant-..."
-                                  className="w-full px-3 py-2 rounded-lg bg-construct-bg/60 border border-construct-border/50 text-xs text-construct-text placeholder:text-construct-textMuted/50 focus:outline-none focus:border-construct-accent/50 pr-8"
+                                  className="w-full px-3 py-2 rounded-lg bg-construct-bg-primary/60 border border-construct-border/50 text-xs text-construct-text-primary placeholder:text-construct-text-muted/50 focus:outline-none focus:border-construct-accent-primary/50 pr-8"
                                 />
                                 <button
                                   onClick={() =>
@@ -332,7 +332,7 @@ const OnboardingModal: React.FC = () => {
                                       anthropic: !p.anthropic,
                                     }))
                                   }
-                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-construct-textMuted hover:text-construct-text"
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-construct-text-muted hover:text-construct-text-primary"
                                 >
                                   {showKeys.anthropic ? (
                                     <EyeOff className="w-3.5 h-3.5" />
@@ -351,13 +351,13 @@ const OnboardingModal: React.FC = () => {
                     <div className="rounded-xl border border-construct-border/40 overflow-hidden">
                       <button
                         onClick={() => toggleSection("google")}
-                        className="w-full flex items-center justify-between px-4 py-3 text-sm text-construct-text hover:bg-white/[0.02] transition-colors"
+                        className="w-full flex items-center justify-between px-4 py-3 text-sm text-construct-text-primary hover:bg-white/[0.02] transition-colors"
                       >
                         <span className="font-medium">Google AI</span>
                         {expandedSection === "google" ? (
-                          <ChevronUp className="w-4 h-4 text-construct-textMuted" />
+                          <ChevronUp className="w-4 h-4 text-construct-text-muted" />
                         ) : (
-                          <ChevronDown className="w-4 h-4 text-construct-textMuted" />
+                          <ChevronDown className="w-4 h-4 text-construct-text-muted" />
                         )}
                       </button>
                       <AnimatePresence>
@@ -376,7 +376,7 @@ const OnboardingModal: React.FC = () => {
                                   value={googleKey}
                                   onChange={(e) => setGoogleKey(e.target.value)}
                                   placeholder="AIza..."
-                                  className="w-full px-3 py-2 rounded-lg bg-construct-bg/60 border border-construct-border/50 text-xs text-construct-text placeholder:text-construct-textMuted/50 focus:outline-none focus:border-construct-accent/50 pr-8"
+                                  className="w-full px-3 py-2 rounded-lg bg-construct-bg-primary/60 border border-construct-border/50 text-xs text-construct-text-primary placeholder:text-construct-text-muted/50 focus:outline-none focus:border-construct-accent-primary/50 pr-8"
                                 />
                                 <button
                                   onClick={() =>
@@ -385,7 +385,7 @@ const OnboardingModal: React.FC = () => {
                                       google: !p.google,
                                     }))
                                   }
-                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-construct-textMuted hover:text-construct-text"
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-construct-text-muted hover:text-construct-text-primary"
                                 >
                                   {showKeys.google ? (
                                     <EyeOff className="w-3.5 h-3.5" />
@@ -401,7 +401,7 @@ const OnboardingModal: React.FC = () => {
                     </div>
                   </div>
 
-                  <p className="text-[11px] text-construct-textMuted/70 text-center">
+                  <p className="text-[11px] text-construct-text-muted/70 text-center">
                     API keys are stored locally and never sent to our servers.
                     You can skip this step and configure later in settings.
                   </p>
@@ -412,14 +412,14 @@ const OnboardingModal: React.FC = () => {
               {step === 3 && (
                 <div className="flex flex-col space-y-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-construct-accent/10 flex items-center justify-center">
-                      <Palette className="w-5 h-5 text-construct-accent" />
+                    <div className="w-10 h-10 rounded-xl bg-construct-accent-primary/10 flex items-center justify-center">
+                      <Palette className="w-5 h-5 text-construct-accent-primary" />
                     </div>
                     <div>
-                      <h2 className="text-lg font-semibold text-construct-text">
+                      <h2 className="text-lg font-semibold text-construct-text-primary">
                         Choose Your Theme
                       </h2>
-                      <p className="text-xs text-construct-textMuted">
+                      <p className="text-xs text-construct-text-muted">
                         Select your preferred appearance
                       </p>
                     </div>
@@ -432,21 +432,21 @@ const OnboardingModal: React.FC = () => {
                         label: "Dark",
                         icon: Moon,
                         preview:
-                          "bg-[#1e1e2e] border-[#313244] text-[#cdd6f4]",
+                          "bg-construct-bg-primary border-construct-border text-construct-text-primary",
                       },
                       {
                         value: "light" as const,
                         label: "Light",
                         icon: Sun,
                         preview:
-                          "bg-[#eff1f5] border-[#ccd0da] text-[#4c4f69]",
+                          "bg-[#f1f5f9] border-[#ccd0da] text-[#4c4f69]",
                       },
                       {
                         value: "system" as const,
                         label: "System",
                         icon: Monitor,
                         preview:
-                          "bg-gradient-to-br from-[#1e1e2e] to-[#eff1f5] border-[#313244] text-[#cdd6f4]",
+                          "bg-gradient-to-br from-construct-bg-primary to-[#f1f5f9] border-construct-border text-construct-text-primary",
                       },
                     ] as const).map((option) => {
                       const Icon = option.icon;
@@ -457,8 +457,8 @@ const OnboardingModal: React.FC = () => {
                           onClick={() => setThemeState(option.value)}
                           className={`relative flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                             isSelected
-                              ? "border-construct-accent bg-construct-accent/5"
-                              : "border-construct-border/30 bg-construct-bg/30 hover:border-construct-border/60"
+                              ? "border-construct-accent-primary bg-construct-accent-primary/5"
+                              : "border-construct-border/30 bg-construct-bg-primary/30 hover:border-construct-border/60"
                           }`}
                         >
                           {/* Preview card */}
@@ -473,22 +473,22 @@ const OnboardingModal: React.FC = () => {
                             <Icon
                               className={`w-3.5 h-3.5 ${
                                 isSelected
-                                  ? "text-construct-accent"
-                                  : "text-construct-textMuted"
+                                  ? "text-construct-accent-primary"
+                                  : "text-construct-text-muted"
                               }`}
                             />
                             <span
                               className={`text-xs font-medium ${
                                 isSelected
-                                  ? "text-construct-accent"
-                                  : "text-construct-textMuted"
+                                  ? "text-construct-accent-primary"
+                                  : "text-construct-text-muted"
                               }`}
                             >
                               {option.label}
                             </span>
                           </div>
                           {isSelected && (
-                            <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-construct-accent flex items-center justify-center">
+                            <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-construct-accent-primary flex items-center justify-center">
                               <Check className="w-3 h-3 text-white" />
                             </div>
                           )}
@@ -517,34 +517,34 @@ const OnboardingModal: React.FC = () => {
                   </motion.div>
 
                   <div className="space-y-2">
-                    <h2 className="text-2xl font-bold text-construct-text">
+                    <h2 className="text-2xl font-bold text-construct-text-primary">
                       Ready to Go!
                     </h2>
-                    <p className="text-sm text-construct-textMuted leading-relaxed max-w-xs mx-auto">
+                    <p className="text-sm text-construct-text-muted leading-relaxed max-w-xs mx-auto">
                       Construct is all set up. Let&apos;s start building
                       something amazing together.
                     </p>
                   </div>
 
                   {/* Summary */}
-                  <div className="w-full rounded-xl bg-construct-bg/50 border border-construct-border/30 p-4 space-y-2.5 text-left">
+                  <div className="w-full rounded-xl bg-construct-bg-primary/50 border border-construct-border/30 p-4 space-y-2.5 text-left">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-construct-textMuted">Goal</span>
-                      <span className="text-construct-text truncate max-w-[200px]">
+                      <span className="text-construct-text-muted">Goal</span>
+                      <span className="text-construct-text-primary truncate max-w-[200px]">
                         {goal || "Not set"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-construct-textMuted">Theme</span>
-                      <span className="text-construct-text capitalize">
+                      <span className="text-construct-text-muted">Theme</span>
+                      <span className="text-construct-text-primary capitalize">
                         {theme}
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-construct-textMuted">
+                      <span className="text-construct-text-muted">
                         API Keys
                       </span>
-                      <span className="text-construct-text">
+                      <span className="text-construct-text-primary">
                         {[
                           openAiKey && "OpenAI",
                           anthropicKey && "Anthropic",
@@ -560,7 +560,7 @@ const OnboardingModal: React.FC = () => {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={handleComplete}
-                    className="w-full py-3 rounded-xl bg-construct-accent text-construct-bg font-semibold text-sm btn-interactive"
+                    className="w-full py-3 rounded-xl bg-construct-accent-primary text-construct-bg-primary font-semibold text-sm btn-interactive"
                   >
                     Start Building
                   </motion.button>
@@ -580,8 +580,8 @@ const OnboardingModal: React.FC = () => {
                 disabled={step === 0}
                 className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                   step === 0
-                    ? "text-construct-textMuted/30 cursor-not-allowed"
-                    : "text-construct-textMuted hover:text-construct-text hover:bg-white/5"
+                    ? "text-construct-text-muted/30 cursor-not-allowed"
+                    : "text-construct-text-muted hover:text-construct-text-primary hover:bg-white/5"
                 }`}
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -599,9 +599,9 @@ const OnboardingModal: React.FC = () => {
                     }}
                     className={`w-2 h-2 rounded-full transition-all ${
                       i === step
-                        ? "w-6 bg-construct-accent"
+                        ? "w-6 bg-construct-accent-primary"
                         : i < step
-                        ? "bg-construct-accent/50"
+                        ? "bg-construct-accent-primary/50"
                         : "bg-construct-border/50 hover:bg-construct-border"
                     }`}
                   />
@@ -611,7 +611,7 @@ const OnboardingModal: React.FC = () => {
               {/* Next button */}
               <button
                 onClick={goNext}
-                className="flex items-center gap-1 px-4 py-2 rounded-lg bg-construct-accent/10 text-construct-accent text-xs font-medium hover:bg-construct-accent/20 transition-colors btn-interactive"
+                className="flex items-center gap-1 px-4 py-2 rounded-lg bg-construct-accent-primary/10 text-construct-accent-primary text-xs font-medium hover:bg-construct-accent-primary/20 transition-colors btn-interactive"
               >
                 Next
                 <ChevronRight className="w-4 h-4" />

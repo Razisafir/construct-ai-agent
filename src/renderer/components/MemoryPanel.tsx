@@ -236,17 +236,17 @@ function RoleBadge({ role }: { role: ConversationMessage["role"] }) {
     user: {
       icon: <User size={10} />,
       label: "You",
-      classes: "bg-construct-accent/15 text-construct-accent border-construct-accent/25",
+      classes: "bg-construct-accent-primary/15 text-construct-accent-primary border-construct-accent-primary/25",
     },
     assistant: {
       icon: <Bot size={10} />,
       label: "AI",
-      classes: "bg-construct-success/15 text-construct-success border-construct-success/25",
+      classes: "bg-construct-semantic-success/15 text-construct-semantic-success border-construct-semantic-success/25",
     },
     system: {
       icon: <Cpu size={10} />,
       label: "System",
-      classes: "bg-construct-textMuted/10 text-construct-textMuted border-construct-textMuted/20",
+      classes: "bg-construct-text-muted/10 text-construct-text-muted border-construct-text-muted/20",
     },
   };
   const c = config[role];
@@ -262,10 +262,10 @@ function RoleBadge({ role }: { role: ConversationMessage["role"] }) {
 
 function ChangeTypeBadge({ type }: { type: CodeEvent["change_type"] }) {
   const config = {
-    create: { label: "CREATE", classes: "bg-construct-success/15 text-construct-success border-construct-success/25" },
-    modify: { label: "MODIFY", classes: "bg-construct-accent/15 text-construct-accent border-construct-accent/25" },
-    delete: { label: "DELETE", classes: "bg-construct-error/15 text-construct-error border-construct-error/25" },
-    refactor: { label: "REFACTOR", classes: "bg-construct-warning/15 text-construct-warning border-construct-warning/25" },
+    create: { label: "CREATE", classes: "bg-construct-semantic-success/15 text-construct-semantic-success border-construct-semantic-success/25" },
+    modify: { label: "MODIFY", classes: "bg-construct-accent-primary/15 text-construct-accent-primary border-construct-accent-primary/25" },
+    delete: { label: "DELETE", classes: "bg-construct-semantic-error/15 text-construct-semantic-error border-construct-semantic-error/25" },
+    refactor: { label: "REFACTOR", classes: "bg-construct-semantic-warning/15 text-construct-semantic-warning border-construct-semantic-warning/25" },
   };
   const c = config[type];
   return (
@@ -295,9 +295,9 @@ function SourceBadge({ source }: { source: ContextItem["source"] }) {
 
 function ConfidenceBar({ confidence }: { confidence: number }) {
   const pct = Math.round(confidence * 100);
-  let colorClass = "bg-construct-success";
-  if (pct < 60) colorClass = "bg-construct-error";
-  else if (pct < 80) colorClass = "bg-construct-warning";
+  let colorClass = "bg-construct-semantic-success";
+  if (pct < 60) colorClass = "bg-construct-semantic-error";
+  else if (pct < 80) colorClass = "bg-construct-semantic-warning";
 
   return (
     <div className="flex items-center gap-2">
@@ -307,7 +307,7 @@ function ConfidenceBar({ confidence }: { confidence: number }) {
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="text-[10px] text-construct-textMuted w-8 text-right">
+      <span className="text-[10px] text-construct-text-muted w-8 text-right">
         {pct}%
       </span>
     </div>
@@ -377,7 +377,7 @@ function ConversationsTab() {
       {/* Messages list */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto pr-1 space-y-2">
         {conversations.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-construct-textMuted">
+          <div className="flex flex-col items-center justify-center h-full text-construct-text-muted">
             <MessagesSquare size={24} className="mb-2 opacity-50" />
             <p className="text-xs">No conversation history yet</p>
           </div>
@@ -388,16 +388,16 @@ function ConversationsTab() {
           return (
             <div
               key={msg.id}
-              className="group flex flex-col gap-1 p-2 rounded bg-construct-panel/50 border border-construct-border/40 hover:border-construct-border transition-colors"
+              className="group flex flex-col gap-1 p-2 rounded bg-construct-bg-primary-tertiary/50 border border-construct-border/40 hover:border-construct-border transition-colors"
             >
               <div className="flex items-center justify-between">
                 <RoleBadge role={msg.role} />
-                <span className="text-[10px] text-construct-textMuted">
+                <span className="text-[10px] text-construct-text-muted">
                   {formatTime(msg.timestamp)}
                 </span>
               </div>
               <p
-                className={`text-xs text-construct-text leading-relaxed ${
+                className={`text-xs text-construct-text-primary leading-relaxed ${
                   !isExpanded && isLong ? "line-clamp-2" : ""
                 }`}
               >
@@ -406,7 +406,7 @@ function ConversationsTab() {
               {isLong && (
                 <button
                   onClick={() => toggleExpand(msg.id)}
-                  className="self-start flex items-center gap-0.5 text-[10px] text-construct-accent hover:text-construct-accentHover transition-colors"
+                  className="self-start flex items-center gap-0.5 text-[10px] text-construct-accent-primary hover:text-construct-accent-primary-primaryHover transition-colors"
                 >
                   {isExpanded ? (
                     <>
@@ -437,12 +437,12 @@ function ConversationsTab() {
             }
           }}
           placeholder="Type a message..."
-          className="flex-1 h-7 px-2.5 bg-construct-bg border border-construct-border rounded text-xs text-construct-text placeholder-construct-textMuted outline-none focus:border-construct-accent transition-colors"
+          className="flex-1 h-7 px-2.5 bg-construct-bg-primary border border-construct-border rounded text-xs text-construct-text-primary placeholder-construct-text-muted outline-none focus:border-construct-accent-primary transition-colors"
         />
         <button
           onClick={handleSend}
           disabled={!inputValue.trim()}
-          className="flex items-center justify-center w-7 h-7 bg-construct-accent hover:bg-construct-accentHover disabled:opacity-40 disabled:hover:bg-construct-accent text-construct-panel rounded transition-colors"
+          className="flex items-center justify-center w-7 h-7 bg-construct-accent-primary hover:bg-construct-accent-primary-primaryHover disabled:opacity-40 disabled:hover:bg-construct-accent-primary text-construct-bg-primary-tertiary rounded transition-colors"
         >
           <Send size={12} />
         </button>
@@ -459,22 +459,22 @@ function CodeEventsTab() {
       {codeEvents.map((event) => (
         <div
           key={event.id}
-          className="flex flex-col gap-1.5 p-2.5 rounded bg-construct-panel/50 border border-construct-border/40 hover:border-construct-border transition-colors"
+          className="flex flex-col gap-1.5 p-2.5 rounded bg-construct-bg-primary-tertiary/50 border border-construct-border/40 hover:border-construct-border transition-colors"
         >
           <div className="flex items-center justify-between">
             <ChangeTypeBadge type={event.change_type} />
-            <span className="text-[10px] text-construct-textMuted flex items-center gap-1">
+            <span className="text-[10px] text-construct-text-muted flex items-center gap-1">
               <Clock size={10} />
               {formatTime(event.timestamp)}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-construct-text">
-            <FileCode size={13} className="text-construct-textMuted shrink-0" />
-            <span className="font-mono text-construct-accent truncate">
+          <div className="flex items-center gap-1.5 text-xs text-construct-text-primary">
+            <FileCode size={13} className="text-construct-text-muted shrink-0" />
+            <span className="font-mono text-construct-accent-primary truncate">
               {event.file_path}
             </span>
           </div>
-          <p className="text-[11px] text-construct-textMuted leading-relaxed">
+          <p className="text-[11px] text-construct-text-muted leading-relaxed">
             {event.summary}
           </p>
         </div>
@@ -502,7 +502,7 @@ function PreferencesTab() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-construct-textMuted">
+      <div className="flex items-center justify-center h-full text-construct-text-muted">
         <div className="animate-pulse text-xs">Loading preferences...</div>
       </div>
     );
@@ -513,19 +513,19 @@ function PreferencesTab() {
       {preferences.map((pref) => (
         <div
           key={pref.key}
-          className="flex flex-col gap-2 p-2.5 rounded bg-construct-panel/50 border border-construct-border/40 hover:border-construct-border transition-colors"
+          className="flex flex-col gap-2 p-2.5 rounded bg-construct-bg-primary-tertiary/50 border border-construct-border/40 hover:border-construct-border transition-colors"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-construct-accent truncate">
+            <span className="text-xs font-mono text-construct-accent-primary truncate">
               {pref.key}
             </span>
-            <span className="text-[10px] text-construct-textMuted flex items-center gap-1">
+            <span className="text-[10px] text-construct-text-muted flex items-center gap-1">
               <Clock size={10} />
               {formatDate(pref.last_updated)}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-construct-text font-medium">
+            <span className="text-xs text-construct-text-primary font-medium">
               {pref.value}
             </span>
           </div>
@@ -582,8 +582,8 @@ function SearchTab() {
     <div className="flex flex-col h-full">
       {/* Search input */}
       <div className="flex items-center gap-2 mb-3">
-        <div className="flex-1 flex items-center gap-2 h-8 px-2.5 bg-construct-bg border border-construct-border rounded focus-within:border-construct-accent transition-colors">
-          <Search size={13} className="text-construct-textMuted shrink-0" />
+        <div className="flex-1 flex items-center gap-2 h-8 px-2.5 bg-construct-bg-primary border border-construct-border rounded focus-within:border-construct-accent-primary transition-colors">
+          <Search size={13} className="text-construct-text-muted shrink-0" />
           <input
             type="text"
             value={memorySearchQuery}
@@ -592,10 +592,10 @@ function SearchTab() {
               if (e.key === "Enter") handleSearch();
             }}
             placeholder="Search memory semantically..."
-            className="flex-1 bg-transparent text-xs text-construct-text placeholder-construct-textMuted outline-none"
+            className="flex-1 bg-transparent text-xs text-construct-text-primary placeholder-construct-text-muted outline-none"
           />
           {isSearching && (
-            <div className="w-3.5 h-3.5 border-2 border-construct-accent border-t-transparent rounded-full animate-spin" />
+            <div className="w-3.5 h-3.5 border-2 border-construct-accent-primary border-t-transparent rounded-full animate-spin" />
           )}
         </div>
       </div>
@@ -607,7 +607,7 @@ function SearchTab() {
           return (
             <div
               key={result.id}
-              className="flex flex-col gap-1.5 p-2.5 rounded bg-construct-panel/50 border border-construct-border/40 hover:border-construct-border transition-colors"
+              className="flex flex-col gap-1.5 p-2.5 rounded bg-construct-bg-primary-tertiary/50 border border-construct-border/40 hover:border-construct-border transition-colors"
             >
               <div className="flex items-center justify-between">
                 <SourceBadge source={result.source} />
@@ -616,29 +616,29 @@ function SearchTab() {
                     size={10}
                     className={
                       pct >= 80
-                        ? "text-construct-success"
+                        ? "text-construct-semantic-success"
                         : pct >= 50
-                          ? "text-construct-warning"
-                          : "text-construct-textMuted"
+                          ? "text-construct-semantic-warning"
+                          : "text-construct-text-muted"
                     }
                   />
                   <span
                     className={`text-[10px] font-medium ${
                       pct >= 80
-                        ? "text-construct-success"
+                        ? "text-construct-semantic-success"
                         : pct >= 50
-                          ? "text-construct-warning"
-                          : "text-construct-textMuted"
+                          ? "text-construct-semantic-warning"
+                          : "text-construct-text-muted"
                     }`}
                   >
                     {pct}% match
                   </span>
                 </div>
               </div>
-              <p className="text-xs text-construct-text leading-relaxed">
+              <p className="text-xs text-construct-text-primary leading-relaxed">
                 {result.content}
               </p>
-              <span className="text-[10px] text-construct-textMuted">
+              <span className="text-[10px] text-construct-text-muted">
                 {formatTime(result.timestamp)} · {formatDate(result.timestamp)}
               </span>
             </div>
@@ -683,8 +683,8 @@ function MemoryPanel() {
   return (
     <div className="flex flex-col h-full">
       {/* ── Stats Bar ── */}
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-construct-panel border-b border-construct-border">
-        <Brain size={12} className="text-construct-accent shrink-0" />
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-construct-bg-primary-tertiary border-b border-construct-border">
+        <Brain size={12} className="text-construct-accent-primary shrink-0" />
         <div className="flex items-center gap-1.5">
           {/* Conversation chip */}
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/15 text-blue-400 border border-blue-500/20">
@@ -705,7 +705,7 @@ function MemoryPanel() {
       </div>
 
       {/* ── Sub-Tab Navigation ── */}
-      <div className="flex items-center h-7 bg-construct-panel border-b border-construct-border">
+      <div className="flex items-center h-7 bg-construct-bg-primary-tertiary border-b border-construct-border">
         {subTabs.map((tab) => (
           <button
             key={tab.id}
@@ -715,8 +715,8 @@ function MemoryPanel() {
               transition-colors duration-100
               ${
                 memoryPanelTab === tab.id
-                  ? "bg-construct-bg text-construct-text border-t-2 border-t-construct-accent"
-                  : "text-construct-textMuted hover:text-construct-text hover:bg-construct-hover"
+                  ? "bg-construct-bg-primary text-construct-text-primary border-t-2 border-t-construct-accent-primary"
+                  : "text-construct-text-muted hover:text-construct-text-primary hover:bg-construct-bg-primary-elevated"
               }
             `}
           >

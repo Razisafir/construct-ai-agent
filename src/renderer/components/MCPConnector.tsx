@@ -199,9 +199,9 @@ export default function MCPConnector() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-construct-border/50">
         <div className="flex items-center gap-2">
-          <Plug size={16} className="text-construct-accent" />
-          <span className="text-sm font-semibold text-construct-text">MCP Connectors</span>
-          <span className="px-1.5 py-0.5 bg-construct-accent/10 rounded text-[10px] text-construct-accent">
+          <Plug size={16} className="text-construct-accent-primary" />
+          <span className="text-sm font-semibold text-construct-text-primary">MCP Connectors</span>
+          <span className="px-1.5 py-0.5 bg-construct-accent-primary/10 rounded text-[10px] text-construct-accent-primary">
             {connections.filter((c) => c.status === "connected").length}/{connections.length} active
           </span>
         </div>
@@ -221,17 +221,17 @@ export default function MCPConnector() {
                 <div
                   className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                     conn.status === "connected"
-                      ? "bg-construct-success/15 text-construct-success"
+                      ? "bg-construct-semantic-success/15 text-construct-semantic-success"
                       : conn.status === "error"
-                      ? "bg-construct-error/15 text-construct-error"
-                      : "bg-construct-textMuted/10 text-construct-textMuted"
+                      ? "bg-construct-semantic-error/15 text-construct-semantic-error"
+                      : "bg-construct-text-muted/10 text-construct-text-muted"
                   }`}
                 >
                   {conn.status === "connected" ? <Wifi size={16} /> : conn.status === "error" ? <AlertCircle size={16} /> : <WifiOff size={16} />}
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-construct-text">{conn.name}</div>
-                  <div className="text-[10px] text-construct-textMuted font-mono">{conn.serverUrl}</div>
+                  <div className="text-xs font-semibold text-construct-text-primary">{conn.name}</div>
+                  <div className="text-[10px] text-construct-text-muted font-mono">{conn.serverUrl}</div>
                 </div>
               </div>
 
@@ -240,29 +240,29 @@ export default function MCPConnector() {
                   status={conn.status === "connected" ? "connected" : conn.status === "error" ? "error" : "disconnected"}
                   pulse={conn.status === "connected"}
                 />
-                <span className="text-[10px] text-construct-textMuted">{conn.lastUsed}</span>
+                <span className="text-[10px] text-construct-text-muted">{conn.lastUsed}</span>
               </div>
             </div>
 
             {/* Stats Row */}
             <div className="flex items-center gap-4 mt-2 py-2 border-t border-construct-border/30">
-              <div className="flex items-center gap-1 text-[10px] text-construct-textMuted">
+              <div className="flex items-center gap-1 text-[10px] text-construct-text-muted">
                 <Wrench size={10} />
-                <span className="text-construct-text">{conn.tools.length}</span> tools
+                <span className="text-construct-text-primary">{conn.tools.length}</span> tools
               </div>
-              <div className="flex items-center gap-1 text-[10px] text-construct-textMuted">
+              <div className="flex items-center gap-1 text-[10px] text-construct-text-muted">
                 <RefreshCw size={10} />
                 Auto-reconnect
                 <button
                   onClick={() => handleToggleAutoReconnect(conn.id)}
                   className={`relative w-7 h-4 rounded-full transition-colors ${
-                    conn.autoReconnect ? "bg-construct-success/40" : "bg-construct-textMuted/20"
+                    conn.autoReconnect ? "bg-construct-semantic-success/40" : "bg-construct-text-muted/20"
                   }`}
                 >
                   <motion.div
                     className="absolute top-0.5 w-3 h-3 rounded-full"
                     style={{
-                      backgroundColor: conn.autoReconnect ? "#a6e3a1" : "#6c7086",
+                      backgroundColor: conn.autoReconnect ? "#10b981" : "#64748b",
                     }}
                     animate={{ left: conn.autoReconnect ? 14 : 2 }}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
@@ -314,17 +314,17 @@ export default function MCPConnector() {
                 >
                   <div className="mt-2 pt-2 border-t border-construct-border/30 space-y-1">
                     {conn.tools.length === 0 ? (
-                      <p className="text-[10px] text-construct-textMuted py-2">No tools available</p>
+                      <p className="text-[10px] text-construct-text-muted py-2">No tools available</p>
                     ) : (
                       conn.tools.map((tool) => (
                         <div
                           key={tool.name}
                           className="flex items-start gap-2 px-2 py-1.5 rounded-lg bg-[rgba(255,255,255,0.03)]"
                         >
-                          <Wrench size={10} className="mt-0.5 text-construct-accent shrink-0" />
+                          <Wrench size={10} className="mt-0.5 text-construct-accent-primary shrink-0" />
                           <div>
-                            <div className="text-[11px] font-medium text-construct-text">{tool.name}</div>
-                            <div className="text-[10px] text-construct-textMuted">{tool.description}</div>
+                            <div className="text-[11px] font-medium text-construct-text-primary">{tool.name}</div>
+                            <div className="text-[10px] text-construct-text-muted">{tool.description}</div>
                           </div>
                         </div>
                       ))
@@ -338,7 +338,7 @@ export default function MCPConnector() {
 
         {/* Available Presets */}
         <div className="mt-4">
-          <div className="text-[11px] font-semibold text-construct-textMuted mb-2">Available Presets</div>
+          <div className="text-[11px] font-semibold text-construct-text-muted mb-2">Available Presets</div>
           <div className="flex flex-wrap gap-2">
             {mcpPresets.slice(0, 6).map((preset) => (
               <button
@@ -347,7 +347,7 @@ export default function MCPConnector() {
                   handlePresetChange(preset.name);
                   setShowAddModal(true);
                 }}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[rgba(255,255,255,0.04)] border border-construct-border/40 rounded-lg text-[10px] text-construct-textMuted hover:text-construct-text hover:border-construct-accent/30 transition-all"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[rgba(255,255,255,0.04)] border border-construct-border/40 rounded-lg text-[10px] text-construct-text-muted hover:text-construct-text-primary hover:border-construct-accent-primary/30 transition-all"
               >
                 {preset.icon}
                 {preset.name}
@@ -355,7 +355,7 @@ export default function MCPConnector() {
             ))}
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-construct-accent/10 border border-construct-accent/20 rounded-lg text-[10px] text-construct-accent hover:bg-construct-accent/20 transition-all"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-construct-accent-primary/10 border border-construct-accent-primary/20 rounded-lg text-[10px] text-construct-accent-primary hover:bg-construct-accent-primary/20 transition-all"
             >
               <Plus size={10} />
               {mcpPresets.length} more...
@@ -380,17 +380,17 @@ export default function MCPConnector() {
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md mx-4 bg-[#1e1e2e] border border-construct-border rounded-2xl shadow-2xl overflow-hidden"
+              className="w-full max-w-md mx-4 bg-construct-bg-primary border border-construct-border rounded-2xl shadow-2xl overflow-hidden"
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-construct-border/50">
                 <div className="flex items-center gap-2">
-                  <Plus size={14} className="text-construct-accent" />
-                  <span className="text-sm font-semibold text-construct-text">Add Connector</span>
+                  <Plus size={14} className="text-construct-accent-primary" />
+                  <span className="text-sm font-semibold text-construct-text-primary">Add Connector</span>
                 </div>
                 <button
                   onClick={() => setShowAddModal(false)}
-                  className="text-construct-textMuted hover:text-construct-text transition-colors"
+                  className="text-construct-text-muted hover:text-construct-text-primary transition-colors"
                 >
                   <X size={14} />
                 </button>
@@ -400,13 +400,13 @@ export default function MCPConnector() {
               <div className="p-4 space-y-3">
                 {/* Preset Selector */}
                 <div>
-                  <label className="block text-[11px] font-medium text-construct-text mb-1">
+                  <label className="block text-[11px] font-medium text-construct-text-primary mb-1">
                     Preset
                   </label>
                   <select
                     value={selectedPreset}
                     onChange={(e) => handlePresetChange(e.target.value)}
-                    className="w-full h-8 px-2.5 bg-[rgba(255,255,255,0.04)] border border-construct-border/50 rounded-lg text-xs text-construct-text outline-none focus:border-construct-accent/50 transition-colors"
+                    className="w-full h-8 px-2.5 bg-[rgba(255,255,255,0.04)] border border-construct-border/50 rounded-lg text-xs text-construct-text-primary outline-none focus:border-construct-accent-primary/50 transition-colors"
                   >
                     <option value="">Custom...</option>
                     {mcpPresets.map((preset) => (
@@ -419,7 +419,7 @@ export default function MCPConnector() {
 
                 {/* Name */}
                 <div>
-                  <label className="block text-[11px] font-medium text-construct-text mb-1">
+                  <label className="block text-[11px] font-medium text-construct-text-primary mb-1">
                     Name
                   </label>
                   <input
@@ -427,13 +427,13 @@ export default function MCPConnector() {
                     value={customName}
                     onChange={(e) => setCustomName(e.target.value)}
                     placeholder="My Connector"
-                    className="w-full h-8 px-2.5 bg-[rgba(255,255,255,0.04)] border border-construct-border/50 rounded-lg text-xs text-construct-text placeholder-construct-textMuted outline-none focus:border-construct-accent/50 transition-colors"
+                    className="w-full h-8 px-2.5 bg-[rgba(255,255,255,0.04)] border border-construct-border/50 rounded-lg text-xs text-construct-text-primary placeholder-construct-text-muted outline-none focus:border-construct-accent-primary/50 transition-colors"
                   />
                 </div>
 
                 {/* URL */}
                 <div>
-                  <label className="block text-[11px] font-medium text-construct-text mb-1">
+                  <label className="block text-[11px] font-medium text-construct-text-primary mb-1">
                     Server URL
                   </label>
                   <input
@@ -441,13 +441,13 @@ export default function MCPConnector() {
                     value={customUrl}
                     onChange={(e) => setCustomUrl(e.target.value)}
                     placeholder="https://api.example.com"
-                    className="w-full h-8 px-2.5 bg-[rgba(255,255,255,0.04)] border border-construct-border/50 rounded-lg text-xs text-construct-text placeholder-construct-textMuted outline-none focus:border-construct-accent/50 transition-colors"
+                    className="w-full h-8 px-2.5 bg-[rgba(255,255,255,0.04)] border border-construct-border/50 rounded-lg text-xs text-construct-text-primary placeholder-construct-text-muted outline-none focus:border-construct-accent-primary/50 transition-colors"
                   />
                 </div>
 
                 {/* API Key */}
                 <div>
-                  <label className="block text-[11px] font-medium text-construct-text mb-1">
+                  <label className="block text-[11px] font-medium text-construct-text-primary mb-1">
                     API Key
                   </label>
                   <input
@@ -455,7 +455,7 @@ export default function MCPConnector() {
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     placeholder="sk-..."
-                    className="w-full h-8 px-2.5 bg-[rgba(255,255,255,0.04)] border border-construct-border/50 rounded-lg text-xs text-construct-text placeholder-construct-textMuted outline-none focus:border-construct-accent/50 transition-colors"
+                    className="w-full h-8 px-2.5 bg-[rgba(255,255,255,0.04)] border border-construct-border/50 rounded-lg text-xs text-construct-text-primary placeholder-construct-text-muted outline-none focus:border-construct-accent-primary/50 transition-colors"
                   />
                 </div>
               </div>

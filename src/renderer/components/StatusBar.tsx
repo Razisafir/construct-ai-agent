@@ -15,7 +15,7 @@ function StatusBar() {
   const cursorPosition = useAppStore((s) => s.cursorPosition);
 
   return (
-    <footer className="flex items-center justify-between h-6 px-2 bg-construct-accent text-construct-panel shrink-0 select-none">
+    <footer className="flex items-center justify-between h-6 px-2 bg-construct-accent-primary text-construct-bg-primary-tertiary shrink-0 select-none">
       {/* Left */}
       <div className="flex items-center gap-0.5">
         <button
@@ -56,7 +56,7 @@ function StatusBar() {
       {/* Center */}
       <div className="flex items-center gap-3 text-[11px]">
         <span className="flex items-center gap-1">
-          <CircleDot size={10} className="text-construct-success" />
+          <CircleDot size={10} className="text-construct-semantic-success" />
           Ready
         </span>
       </div>

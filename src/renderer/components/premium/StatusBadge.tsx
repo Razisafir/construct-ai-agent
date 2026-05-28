@@ -15,37 +15,37 @@ export function StatusBadge({
 }: StatusBadgeProps) {
   const statusConfig = {
     active: {
-      color: "#a6e3a1",
+      color: "#10b981",
       bg: "rgba(166,227,161,0.12)",
       border: "rgba(166,227,161,0.25)",
       label: text || "Active",
     },
     connected: {
-      color: "#a6e3a1",
+      color: "#10b981",
       bg: "rgba(166,227,161,0.12)",
       border: "rgba(166,227,161,0.25)",
       label: text || "Connected",
     },
     idle: {
-      color: "#6c7086",
+      color: "#64748b",
       bg: "rgba(108,112,134,0.12)",
       border: "rgba(108,112,134,0.25)",
       label: text || "Idle",
     },
     disconnected: {
-      color: "#6c7086",
+      color: "#64748b",
       bg: "rgba(108,112,134,0.12)",
       border: "rgba(108,112,134,0.25)",
       label: text || "Disconnected",
     },
     error: {
-      color: "#f38ba8",
+      color: "#ef4444",
       bg: "rgba(243,139,168,0.12)",
       border: "rgba(243,139,168,0.25)",
       label: text || "Error",
     },
     warning: {
-      color: "#f9e2af",
+      color: "#f59e0b",
       bg: "rgba(249,226,175,0.12)",
       border: "rgba(249,226,175,0.25)",
       label: text || "Warning",

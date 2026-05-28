@@ -58,36 +58,36 @@ function StatusBadge({ status }: { status: string }) {
     running: {
       icon: <Loader2 size={10} className="animate-spin" />,
       classes:
-        "bg-construct-accent/15 text-construct-accent border-construct-accent/25",
+        "bg-construct-accent-primary/15 text-construct-accent-primary border-construct-accent-primary/25",
       label: "Running",
     },
     paused: {
       icon: <Pause size={10} />,
       classes:
-        "bg-construct-warning/15 text-construct-warning border-construct-warning/25",
+        "bg-construct-semantic-warning/15 text-construct-semantic-warning border-construct-semantic-warning/25",
       label: "Paused",
     },
     completed: {
       icon: <CheckCircle2 size={10} />,
       classes:
-        "bg-construct-success/15 text-construct-success border-construct-success/25",
+        "bg-construct-semantic-success/15 text-construct-semantic-success border-construct-semantic-success/25",
       label: "Done",
     },
     failed: {
       icon: <XCircle size={10} />,
       classes:
-        "bg-construct-error/15 text-construct-error border-construct-error/25",
+        "bg-construct-semantic-error/15 text-construct-semantic-error border-construct-semantic-error/25",
       label: "Failed",
     },
     waiting: {
       icon: <AlertCircle size={10} />,
       classes:
-        "bg-construct-warning/15 text-construct-warning border-construct-warning/25",
+        "bg-construct-semantic-warning/15 text-construct-semantic-warning border-construct-semantic-warning/25",
       label: "Waiting",
     },
     idle: {
       icon: <Circle size={10} />,
-      classes: "bg-construct-textMuted/10 text-construct-textMuted",
+      classes: "bg-construct-text-muted/10 text-construct-text-muted",
       label: "Idle",
     },
   };
@@ -110,20 +110,20 @@ function TaskItem({
   isActive: boolean;
 }) {
   const icon = {
-    pending: <Circle size={12} className="text-construct-textMuted" />,
+    pending: <Circle size={12} className="text-construct-text-muted" />,
     in_progress: (
-      <Loader2 size={12} className="text-construct-accent animate-spin" />
+      <Loader2 size={12} className="text-construct-accent-primary animate-spin" />
     ),
-    completed: <CheckCircle2 size={12} className="text-construct-success" />,
-    failed: <XCircle size={12} className="text-construct-error" />,
-    blocked: <AlertCircle size={12} className="text-construct-warning" />,
+    completed: <CheckCircle2 size={12} className="text-construct-semantic-success" />,
+    failed: <XCircle size={12} className="text-construct-semantic-error" />,
+    blocked: <AlertCircle size={12} className="text-construct-semantic-warning" />,
   }[task.status];
 
   return (
     <div
       className={`flex items-center gap-2 px-2 py-1 rounded text-[11px] transition-colors ${
         isActive
-          ? "bg-construct-accent/10 border border-construct-accent/20"
+          ? "bg-construct-accent-primary/10 border border-construct-accent-primary/20"
           : "border border-transparent"
       } ${task.status === "completed" ? "opacity-60" : ""}`}
     >
@@ -131,8 +131,8 @@ function TaskItem({
       <span
         className={`flex-1 truncate ${
           task.status === "completed"
-            ? "line-through text-construct-textMuted"
-            : "text-construct-text"
+            ? "line-through text-construct-text-muted"
+            : "text-construct-text-primary"
         }`}
       >
         {task.description}
@@ -152,18 +152,18 @@ function EventItem({ event }: { event: AgentOutputEvent }) {
   > = {
     thought: {
       icon: <Sparkles size={11} />,
-      borderColor: "border-construct-accent/30",
-      bgColor: "bg-construct-panel/30",
+      borderColor: "border-construct-accent-primary/30",
+      bgColor: "bg-construct-bg-primary-tertiary/30",
     },
     tool_call: {
       icon: <Terminal size={11} />,
-      borderColor: "border-construct-warning/30",
-      bgColor: "bg-construct-warning/5",
+      borderColor: "border-construct-semantic-warning/30",
+      bgColor: "bg-construct-semantic-warning/5",
     },
     tool_result: {
       icon: <CheckCheck size={11} />,
-      borderColor: "border-construct-success/30",
-      bgColor: "bg-construct-success/5",
+      borderColor: "border-construct-semantic-success/30",
+      bgColor: "bg-construct-semantic-success/5",
     },
     code: {
       icon: <FileCode size={11} />,
@@ -172,33 +172,33 @@ function EventItem({ event }: { event: AgentOutputEvent }) {
     },
     error: {
       icon: <AlertCircle size={11} />,
-      borderColor: "border-construct-error/30",
-      bgColor: "bg-construct-error/5",
+      borderColor: "border-construct-semantic-error/30",
+      bgColor: "bg-construct-semantic-error/5",
     },
     complete: {
       icon: <CheckCircle2 size={11} />,
-      borderColor: "border-construct-success/30",
-      bgColor: "bg-construct-success/10",
+      borderColor: "border-construct-semantic-success/30",
+      bgColor: "bg-construct-semantic-success/10",
     },
     task_start: {
       icon: <ChevronRight size={11} />,
-      borderColor: "border-construct-accent/20",
-      bgColor: "bg-construct-panel/20",
+      borderColor: "border-construct-accent-primary/20",
+      bgColor: "bg-construct-bg-primary-tertiary/20",
     },
     task_complete: {
       icon: <CheckCircle2 size={11} />,
-      borderColor: "border-construct-success/20",
-      bgColor: "bg-construct-success/5",
+      borderColor: "border-construct-semantic-success/20",
+      bgColor: "bg-construct-semantic-success/5",
     },
     task_failed: {
       icon: <XCircle size={11} />,
-      borderColor: "border-construct-error/20",
-      bgColor: "bg-construct-error/5",
+      borderColor: "border-construct-semantic-error/20",
+      bgColor: "bg-construct-semantic-error/5",
     },
     waiting: {
       icon: <Clock size={11} />,
-      borderColor: "border-construct-warning/20",
-      bgColor: "bg-construct-warning/5",
+      borderColor: "border-construct-semantic-warning/20",
+      bgColor: "bg-construct-semantic-warning/5",
     },
   };
 
@@ -209,22 +209,22 @@ function EventItem({ event }: { event: AgentOutputEvent }) {
     <div
       className={`flex gap-2 px-2 py-1.5 rounded border-l-2 ${cfg.borderColor} ${cfg.bgColor}`}
     >
-      <span className="text-construct-textMuted mt-0.5 shrink-0">
+      <span className="text-construct-text-muted mt-0.5 shrink-0">
         {cfg.icon}
       </span>
       <div className="flex-1 min-w-0">
         {isCode ? (
-          <pre className="text-[10px] font-mono text-construct-text bg-construct-bg/50 p-2 rounded overflow-x-auto">
+          <pre className="text-[10px] font-mono text-construct-text-primary bg-construct-bg-primary/50 p-2 rounded overflow-x-auto">
             <code>{event.content}</code>
           </pre>
         ) : (
           <p
             className={`text-[11px] leading-relaxed ${
               event.type === "error"
-                ? "text-construct-error"
+                ? "text-construct-semantic-error"
                 : event.type === "complete"
-                ? "text-construct-success font-medium"
-                : "text-construct-text"
+                ? "text-construct-semantic-success font-medium"
+                : "text-construct-text-primary"
             }`}
           >
             {event.content}
@@ -331,22 +331,22 @@ function AgentPanel() {
     return (
       <div className="flex flex-col items-center justify-center h-full px-8">
         <div className="flex items-center gap-2 mb-6">
-          <Bot size={24} className="text-construct-accent" />
-          <h2 className="text-lg font-semibold text-construct-text">
+          <Bot size={24} className="text-construct-accent-primary" />
+          <h2 className="text-lg font-semibold text-construct-text-primary">
             Construct Agent
           </h2>
         </div>
 
-        <p className="text-xs text-construct-textMuted mb-6 text-center max-w-md">
+        <p className="text-xs text-construct-text-muted mb-6 text-center max-w-md">
           Describe what you want to build. The agent will plan, code, test, and
           commit autonomously.
         </p>
 
         <div className="flex items-center gap-2 w-full max-w-lg">
-          <div className="flex-1 flex items-center h-9 px-3 bg-construct-bg border border-construct-border rounded focus-within:border-construct-accent transition-colors">
+          <div className="flex-1 flex items-center h-9 px-3 bg-construct-bg-primary border border-construct-border rounded focus-within:border-construct-accent-primary transition-colors">
             <Target
               size={14}
-              className="text-construct-textMuted mr-2 shrink-0"
+              className="text-construct-text-muted mr-2 shrink-0"
             />
             <input
               type="text"
@@ -359,13 +359,13 @@ function AgentPanel() {
                 }
               }}
               placeholder="e.g., Create a React counter component with TypeScript"
-              className="flex-1 bg-transparent text-xs text-construct-text placeholder-construct-textMuted outline-none"
+              className="flex-1 bg-transparent text-xs text-construct-text-primary placeholder-construct-text-muted outline-none"
             />
           </div>
           <button
             onClick={handleStart}
             disabled={!goal.trim() || isLoading}
-            className="flex items-center gap-1.5 h-9 px-4 bg-construct-accent hover:bg-construct-accentHover disabled:opacity-40 text-construct-panel rounded text-xs font-semibold transition-colors"
+            className="flex items-center gap-1.5 h-9 px-4 bg-construct-accent-primary hover:bg-construct-accent-primary-primaryHover disabled:opacity-40 text-construct-bg-primary-tertiary rounded text-xs font-semibold transition-colors"
           >
             {isLoading ? (
               <Loader2 size={14} className="animate-spin" />
@@ -382,8 +382,8 @@ function AgentPanel() {
             onClick={() => setIsAutonomous(!isAutonomous)}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-medium transition-colors ${
               isAutonomous
-                ? "bg-construct-success/15 text-construct-success border border-construct-success/25"
-                : "bg-construct-textMuted/10 text-construct-textMuted border border-construct-textMuted/20"
+                ? "bg-construct-semantic-success/15 text-construct-semantic-success border border-construct-semantic-success/25"
+                : "bg-construct-text-muted/10 text-construct-text-muted border border-construct-text-muted/20"
             }`}
           >
             <Sparkles size={10} />
@@ -398,18 +398,18 @@ function AgentPanel() {
   return (
     <div className="flex flex-col h-full">
       {/* Goal Card */}
-      <div className="flex items-start gap-3 p-3 bg-construct-panel border-b border-construct-border">
+      <div className="flex items-start gap-3 p-3 bg-construct-bg-primary-tertiary border-b border-construct-border">
         <Target
           size={16}
-          className="text-construct-accent mt-0.5 shrink-0"
+          className="text-construct-accent-primary mt-0.5 shrink-0"
         />
         <div className="flex-1 min-w-0">
-          <p className="text-xs text-construct-text font-medium truncate">
+          <p className="text-xs text-construct-text-primary font-medium truncate">
             {session.goal}
           </p>
           <div className="flex items-center gap-2 mt-1">
             <StatusBadge status={session.status} />
-            <span className="text-[10px] text-construct-textMuted">
+            <span className="text-[10px] text-construct-text-muted">
               {events.length} events
             </span>
           </div>
@@ -419,7 +419,7 @@ function AgentPanel() {
           {session.status === "running" && (
             <button
               onClick={handlePause}
-              className="flex items-center justify-center w-7 h-7 rounded hover:bg-construct-hover text-construct-textMuted hover:text-construct-warning transition-colors"
+              className="flex items-center justify-center w-7 h-7 rounded hover:bg-construct-bg-primary-elevated text-construct-text-muted hover:text-construct-semantic-warning transition-colors"
               title="Pause"
             >
               <Pause size={14} />
@@ -428,7 +428,7 @@ function AgentPanel() {
           {session.status === "paused" && (
             <button
               onClick={handleResume}
-              className="flex items-center justify-center w-7 h-7 rounded hover:bg-construct-hover text-construct-textMuted hover:text-construct-success transition-colors"
+              className="flex items-center justify-center w-7 h-7 rounded hover:bg-construct-bg-primary-elevated text-construct-text-muted hover:text-construct-semantic-success transition-colors"
               title="Resume"
             >
               <Play size={14} />
@@ -436,7 +436,7 @@ function AgentPanel() {
           )}
           <button
             onClick={handleStop}
-            className="flex items-center justify-center w-7 h-7 rounded hover:bg-construct-hover text-construct-textMuted hover:text-construct-error transition-colors"
+            className="flex items-center justify-center w-7 h-7 rounded hover:bg-construct-bg-primary-elevated text-construct-text-muted hover:text-construct-semantic-error transition-colors"
             title="Stop"
           >
             <Square size={14} />
@@ -446,12 +446,12 @@ function AgentPanel() {
 
       {/* Task List */}
       <div className="px-3 py-2 border-b border-construct-border">
-        <h3 className="text-[10px] font-semibold text-construct-textMuted uppercase tracking-wider mb-1.5">
+        <h3 className="text-[10px] font-semibold text-construct-text-muted uppercase tracking-wider mb-1.5">
           Tasks
         </h3>
         <div className="space-y-1">
           {session.tasks.length === 0 ? (
-            <div className="text-[10px] text-construct-textMuted italic">
+            <div className="text-[10px] text-construct-text-muted italic">
               Planning tasks...
             </div>
           ) : (
@@ -475,7 +475,7 @@ function AgentPanel() {
           <EventItem key={i} event={event} />
         ))}
         {session.status === "running" && events.length > 0 && (
-          <div className="flex items-center gap-1.5 text-construct-textMuted">
+          <div className="flex items-center gap-1.5 text-construct-text-muted">
             <Loader2 size={10} className="animate-spin" />
             <span className="text-[10px]">Working...</span>
           </div>

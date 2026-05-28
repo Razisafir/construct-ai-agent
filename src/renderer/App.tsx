@@ -36,11 +36,11 @@ function App() {
         transition={{ duration: 0.3, ease: "easeOut" }}
         className="flex items-center h-9 px-3 glass-panel border-b border-construct-border/50 shrink-0 z-10"
       >
-        <span className="text-xs font-semibold tracking-widest text-construct-accent uppercase select-none">
+        <span className="text-xs font-semibold tracking-widest text-construct-accent-primary uppercase select-none">
           Construct
         </span>
         <div className="flex-1" />
-        <span className="text-[10px] text-construct-textMuted select-none">v0.1.0</span>
+        <span className="text-[10px] text-construct-text-muted select-none">v0.1.0</span>
       </motion.div>
 
       {/* Main Layout */}
@@ -121,4 +121,4 @@ function EditorSkeleton() {
   );
 }
 
-export default App;
+export defau

@@ -60,9 +60,9 @@ interface Conflict {
 }
 
 const agentColors: Record<string, string> = {
-  Orchestrator: "#89b4fa",
-  Developer: "#a6e3a1",
-  Security: "#f38ba8",
+  Orchestrator: "#6366f1",
+  Developer: "#10b981",
+  Security: "#10b981",
   Researcher: "#cba6f7",
 };
 
@@ -74,7 +74,7 @@ const demoAgents: AgentRole[] = [
     status: "active",
     currentTask: "Coordinating team workflow",
     progress: 78,
-    color: "#89b4fa",
+    color: "#6366f1",
   },
   {
     id: "a2",
@@ -83,7 +83,7 @@ const demoAgents: AgentRole[] = [
     status: "active",
     currentTask: "Implementing auth module",
     progress: 45,
-    color: "#a6e3a1",
+    color: "#10b981",
   },
   {
     id: "a3",
@@ -92,7 +92,7 @@ const demoAgents: AgentRole[] = [
     status: "idle",
     currentTask: "Waiting for code review",
     progress: 0,
-    color: "#f38ba8",
+    color: "#10b981",
   },
   {
     id: "a4",
@@ -169,10 +169,10 @@ const demoConflicts: Conflict[] = [
 ];
 
 const kanbanColumns = [
-  { id: "pending", label: "Pending", icon: <Clock size={12} />, color: "#6c7086" },
-  { id: "active", label: "Active", icon: <Zap size={12} />, color: "#89b4fa" },
-  { id: "completed", label: "Completed", icon: <CheckCircle2 size={12} />, color: "#a6e3a1" },
-  { id: "failed", label: "Failed", icon: <XCircle size={12} />, color: "#f38ba8" },
+  { id: "pending", label: "Pending", icon: <Clock size={12} />, color: "#64748b" },
+  { id: "active", label: "Active", icon: <Zap size={12} />, color: "#6366f1" },
+  { id: "completed", label: "Completed", icon: <CheckCircle2 size={12} />, color: "#10b981" },
+  { id: "failed", label: "Failed", icon: <XCircle size={12} />, color: "#10b981" },
 ];
 
 export default function MultiAgentPanel() {
@@ -220,13 +220,13 @@ export default function MultiAgentPanel() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-construct-border/50">
         <div className="flex items-center gap-2">
-          <Users size={16} className="text-construct-accent" />
-          <span className="text-sm font-semibold text-construct-text">Agent Team</span>
-          <span className="px-1.5 py-0.5 bg-construct-success/10 rounded text-[10px] text-construct-success">
+          <Users size={16} className="text-construct-accent-primary" />
+          <span className="text-sm font-semibold text-construct-text-primary">Agent Team</span>
+          <span className="px-1.5 py-0.5 bg-construct-semantic-success/10 rounded text-[10px] text-construct-semantic-success">
             {agents.filter((a) => a.status === "active").length} active
           </span>
           {conflicts.length > 0 && (
-            <span className="px-1.5 py-0.5 bg-construct-error/10 rounded text-[10px] text-construct-error">
+            <span className="px-1.5 py-0.5 bg-construct-semantic-error/10 rounded text-[10px] text-construct-semantic-error">
               {conflicts.length} conflict
             </span>
           )}
@@ -247,13 +247,13 @@ export default function MultiAgentPanel() {
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="mx-4 mt-2 p-2.5 rounded-xl border border-construct-error/30 bg-construct-error/5 flex items-start gap-2">
-              <AlertCircle size={14} className="text-construct-error shrink-0 mt-0.5" />
+            <div className="mx-4 mt-2 p-2.5 rounded-xl border border-construct-semantic-error/30 bg-construct-semantic-error/5 flex items-start gap-2">
+              <AlertCircle size={14} className="text-construct-semantic-error shrink-0 mt-0.5" />
               <div>
-                <div className="text-[11px] font-semibold text-construct-error">
+                <div className="text-[11px] font-semibold text-construct-semantic-error">
                   Conflict: {conflict.agents.join(" vs ")}
                 </div>
-                <div className="text-[10px] text-construct-textMuted">{conflict.issue}</div>
+                <div className="text-[10px] text-construct-text-muted">{conflict.issue}</div>
               </div>
             </div>
           </motion.div>
@@ -273,8 +273,8 @@ export default function MultiAgentPanel() {
             className={`
               flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all
               ${activeSubTab === tab.id
-                ? "bg-construct-accent/15 text-construct-accent"
-                : "text-construct-textMuted hover:text-construct-text"
+                ? "bg-construct-accent-primary/15 text-construct-accent-primary"
+                : "text-construct-text-muted hover:text-construct-text-primary"
               }
             `}
           >
@@ -318,13 +318,13 @@ export default function MultiAgentPanel() {
                   <div className="flex items-center gap-2 mb-2">
                     {/* Avatar */}
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-construct-panel"
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-construct-bg-primary-tertiary"
                       style={{ backgroundColor: agent.color }}
                     >
                       {agent.name[0]}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-semibold text-construct-text truncate">{agent.name}</div>
+                      <div className="text-xs font-semibold text-construct-text-primary truncate">{agent.name}</div>
                       <div className="flex items-center gap-1 text-[10px]" style={{ color: agent.color }}>
                         {getRoleIcon(agent.role)}
                         {agent.role}
@@ -340,7 +340,7 @@ export default function MultiAgentPanel() {
                   />
 
                   {agent.currentTask && (
-                    <div className="text-[10px] text-construct-textMuted truncate mb-1.5">
+                    <div className="text-[10px] text-construct-text-muted truncate mb-1.5">
                       {agent.currentTask}
                     </div>
                   )}
@@ -357,7 +357,7 @@ export default function MultiAgentPanel() {
                           transition={{ duration: 1, ease: "easeOut" }}
                         />
                       </div>
-                      <span className="text-[9px] text-construct-textMuted">{agent.progress}%</span>
+                      <span className="text-[9px] text-construct-text-muted">{agent.progress}%</span>
                     </div>
                   )}
                 </GlassCard>
@@ -373,7 +373,7 @@ export default function MultiAgentPanel() {
             <div className="flex-1 space-y-2 overflow-auto mb-3">
               {messages.map((msg, index) => {
                 const isFromYou = msg.fromAgent === "You";
-                const agentColor = agentColors[msg.fromAgent] || "#6c7086";
+                const agentColor = agentColors[msg.fromAgent] || "#64748b";
 
                 return (
                   <motion.div
@@ -385,7 +385,7 @@ export default function MultiAgentPanel() {
                   >
                     {/* Avatar */}
                     <div
-                      className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-construct-panel shrink-0"
+                      className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-construct-bg-primary-tertiary shrink-0"
                       style={{ backgroundColor: agentColor }}
                     >
                       {msg.fromAgent[0]}
@@ -399,19 +399,19 @@ export default function MultiAgentPanel() {
                         </span>
                         {msg.toAgent && (
                           <>
-                            <ChevronRight size={8} className="text-construct-textMuted" />
-                            <span className="text-[9px] text-construct-textMuted">{msg.toAgent}</span>
+                            <ChevronRight size={8} className="text-construct-text-muted" />
+                            <span className="text-[9px] text-construct-text-muted">{msg.toAgent}</span>
                           </>
                         )}
-                        <span className="text-[9px] text-construct-textMuted">{formatTime(msg.timestamp)}</span>
+                        <span className="text-[9px] text-construct-text-muted">{formatTime(msg.timestamp)}</span>
                       </div>
 
                       {/* Message Bubble */}
                       <div
                         className={`px-2.5 py-1.5 rounded-xl text-[11px] ${
                           isFromYou
-                            ? "bg-construct-accent/20 text-construct-text border border-construct-accent/20"
-                            : "bg-[rgba(255,255,255,0.04)] text-construct-text border border-construct-border/30"
+                            ? "bg-construct-accent-primary/20 text-construct-text-primary border border-construct-accent-primary/20"
+                            : "bg-[rgba(255,255,255,0.04)] text-construct-text-primary border border-construct-border/30"
                         }`}
                       >
                         {msg.content}
@@ -421,10 +421,10 @@ export default function MultiAgentPanel() {
                       <span
                         className={`inline-block mt-0.5 px-1 rounded text-[8px] capitalize ${
                           msg.type === "alert"
-                            ? "bg-construct-warning/10 text-construct-warning"
+                            ? "bg-construct-semantic-warning/10 text-construct-semantic-warning"
                             : msg.type === "request"
-                            ? "bg-construct-accent/10 text-construct-accent"
-                            : "bg-[rgba(255,255,255,0.04)] text-construct-textMuted"
+                            ? "bg-construct-accent-primary/10 text-construct-accent-primary"
+                            : "bg-[rgba(255,255,255,0.04)] text-construct-text-muted"
                         }`}
                       >
                         {msg.type}
@@ -444,7 +444,7 @@ export default function MultiAgentPanel() {
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                   placeholder="@agent_name message..."
-                  className="w-full h-8 px-3 bg-[rgba(255,255,255,0.04)] border border-construct-border/50 rounded-lg text-xs text-construct-text placeholder-construct-textMuted outline-none focus:border-construct-accent/50 transition-colors"
+                  className="w-full h-8 px-3 bg-[rgba(255,255,255,0.04)] border border-construct-border/50 rounded-lg text-xs text-construct-text-primary placeholder-construct-text-muted outline-none focus:border-construct-accent-primary/50 transition-colors"
                 />
               </div>
               <GlowButton size="sm" onClick={handleSendMessage} disabled={!chatInput.trim()}>
@@ -464,8 +464,8 @@ export default function MultiAgentPanel() {
                   {/* Column Header */}
                   <div className="flex items-center gap-1.5 px-2 py-1.5 mb-2 rounded-lg bg-[rgba(255,255,255,0.03)]">
                     <span style={{ color: col.color }}>{col.icon}</span>
-                    <span className="text-[11px] font-semibold text-construct-text">{col.label}</span>
-                    <span className="ml-auto text-[10px] text-construct-textMuted">{colTasks.length}</span>
+                    <span className="text-[11px] font-semibold text-construct-text-primary">{col.label}</span>
+                    <span className="ml-auto text-[10px] text-construct-text-muted">{colTasks.length}</span>
                   </div>
 
                   {/* Task Cards */}
@@ -476,13 +476,13 @@ export default function MultiAgentPanel() {
                         layout
                         className="p-2 rounded-xl bg-[rgba(255,255,255,0.04)] border border-construct-border/30 hover:border-construct-border/60 transition-colors"
                       >
-                        <div className="text-[10px] font-medium text-construct-text mb-1">{task.title}</div>
+                        <div className="text-[10px] font-medium text-construct-text-primary mb-1">{task.title}</div>
                         <div className="flex items-center justify-between">
                           <span
                             className="px-1 rounded text-[8px]"
                             style={{
-                              backgroundColor: `${agentColors[task.assignee] || "#6c7086"}20`,
-                              color: agentColors[task.assignee] || "#6c7086",
+                              backgroundColor: `${agentColors[task.assignee] || "#64748b"}20`,
+                              color: agentColors[task.assignee] || "#64748b",
                             }}
                           >
                             {task.assignee}
@@ -490,10 +490,10 @@ export default function MultiAgentPanel() {
                           <span
                             className={`text-[8px] capitalize ${
                               task.priority === "high"
-                                ? "text-construct-error"
+                                ? "text-construct-semantic-error"
                                 : task.priority === "medium"
-                                ? "text-construct-warning"
-                                : "text-construct-textMuted"
+                                ? "text-construct-semantic-warning"
+                                : "text-construct-text-muted"
                             }`}
                           >
                             {task.priority}
@@ -505,7 +505,7 @@ export default function MultiAgentPanel() {
                           {col.id !== "pending" && (
                             <button
                               onClick={() => moveTask(task.id, "pending")}
-                              className="text-[8px] text-construct-textMuted hover:text-construct-text transition-colors"
+                              className="text-[8px] text-construct-text-muted hover:text-construct-text-primary transition-colors"
                             >
                               To Do
                             </button>
@@ -513,7 +513,7 @@ export default function MultiAgentPanel() {
                           {col.id !== "active" && (
                             <button
                               onClick={() => moveTask(task.id, "active")}
-                              className="text-[8px] text-construct-textMuted hover:text-construct-accent transition-colors"
+                              className="text-[8px] text-construct-text-muted hover:text-construct-accent-primary transition-colors"
                             >
                               Start
                             </button>
@@ -521,7 +521,7 @@ export default function MultiAgentPanel() {
                           {col.id !== "completed" && (
                             <button
                               onClick={() => moveTask(task.id, "completed")}
-                              className="text-[8px] text-construct-textMuted hover:text-construct-success transition-colors"
+                              className="text-[8px] text-construct-text-muted hover:text-construct-semantic-success transition-colors"
                             >
                               Done
                             </button>
@@ -529,7 +529,7 @@ export default function MultiAgentPanel() {
                           {col.id !== "failed" && (
                             <button
                               onClick={() => moveTask(task.id, "failed")}
-                              className="text-[8px] text-construct-textMuted hover:text-construct-error transition-colors"
+                              className="text-[8px] text-construct-text-muted hover:text-construct-semantic-error transition-colors"
                             >
                               Fail
                             </button>

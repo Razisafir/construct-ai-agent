@@ -19,9 +19,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 
 function LoadingScreen() {
   return (
-    <div className="flex flex-col items-center justify-center w-full h-full bg-construct-bg gap-4">
-      <div className="w-10 h-10 border-2 border-construct-accent border-t-transparent rounded-full animate-spin" />
-      <span className="text-sm text-construct-textMuted">Loading Construct...</span>
+    <div className="flex flex-col items-center justify-center w-full h-full bg-construct-bg-primary gap-4">
+      <div className="w-10 h-10 border-2 border-construct-accent-primary border-t-transparent rounded-full animate-spin" />
+      <span className="text-sm text-construct-text-muted">Loading Construct...</span>
     </div>
   );
 }

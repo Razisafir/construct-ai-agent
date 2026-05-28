@@ -10,7 +10,7 @@ export function TypingIndicator({ className = "" }: TypingIndicatorProps) {
       {[0, 1, 2].map((i) => (
         <motion.div
           key={i}
-          className="w-1.5 h-1.5 rounded-full bg-construct-accent"
+          className="w-1.5 h-1.5 rounded-full bg-construct-accent-primary"
           animate={{
             y: [0, -6, 0],
             opacity: [0.4, 1, 0.4],

@@ -261,8 +261,8 @@ export default function SkillMarketplace() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-construct-border/50">
         <div className="flex items-center gap-2">
-          <Wrench size={16} className="text-construct-accent" />
-          <span className="text-sm font-semibold text-construct-text">Skill Marketplace</span>
+          <Wrench size={16} className="text-construct-accent-primary" />
+          <span className="text-sm font-semibold text-construct-text-primary">Skill Marketplace</span>
         </div>
         <GlowButton size="sm" onClick={() => setShowUpload(!showUpload)}>
           <Upload size={12} />
@@ -288,17 +288,17 @@ export default function SkillMarketplace() {
               className={`
                 mx-4 mt-3 p-6 rounded-xl border-2 border-dashed cursor-pointer text-center transition-all
                 ${dragOver
-                  ? "border-construct-accent bg-construct-accent/5"
-                  : "border-construct-border/50 bg-[rgba(255,255,255,0.02)] hover:border-construct-accent/50"
+                  ? "border-construct-accent-primary bg-construct-accent-primary/5"
+                  : "border-construct-border/50 bg-[rgba(255,255,255,0.02)] hover:border-construct-accent-primary/50"
                 }
               `}
             >
               <input ref={fileInputRef} type="file" className="hidden" accept=".md,.txt,.pdf" />
-              <FileText size={24} className="mx-auto mb-2 text-construct-textMuted" />
-              <p className="text-xs text-construct-textMuted">
+              <FileText size={24} className="mx-auto mb-2 text-construct-text-muted" />
+              <p className="text-xs text-construct-text-muted">
                 Drag & drop a document, or click to browse
               </p>
-              <p className="text-[10px] text-construct-textMuted mt-1">Supports .md, .txt, .pdf</p>
+              <p className="text-[10px] text-construct-text-muted mt-1">Supports .md, .txt, .pdf</p>
             </div>
 
             {/* Upload Preview */}
@@ -313,10 +313,10 @@ export default function SkillMarketplace() {
                   <GlassCard className="p-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-xs font-medium text-construct-text">
+                        <div className="text-xs font-medium text-construct-text-primary">
                           {uploadPreview.name}
                         </div>
-                        <div className="text-[10px] text-construct-textMuted">
+                        <div className="text-[10px] text-construct-text-muted">
                           {uploadPreview.steps.length} steps detected
                         </div>
                       </div>
@@ -347,8 +347,8 @@ export default function SkillMarketplace() {
             className={`
               px-2.5 py-1 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all
               ${activeCategory === cat
-                ? "bg-construct-accent/15 text-construct-accent border border-construct-accent/25"
-                : "text-construct-textMuted hover:text-construct-text hover:bg-[rgba(255,255,255,0.04)]"
+                ? "bg-construct-accent-primary/15 text-construct-accent-primary border border-construct-accent-primary/25"
+                : "text-construct-text-muted hover:text-construct-text-primary hover:bg-[rgba(255,255,255,0.04)]"
               }
             `}
           >
@@ -357,13 +357,13 @@ export default function SkillMarketplace() {
         ))}
         <div className="flex-1" />
         <div className="relative">
-          <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-construct-textMuted" />
+          <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-construct-text-muted" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search skills..."
-            className="h-6 pl-7 pr-2 bg-[rgba(255,255,255,0.04)] border border-construct-border/50 rounded-lg text-[11px] text-construct-text placeholder-construct-textMuted outline-none focus:border-construct-accent/50 transition-colors w-36"
+            className="h-6 pl-7 pr-2 bg-[rgba(255,255,255,0.04)] border border-construct-border/50 rounded-lg text-[11px] text-construct-text-primary placeholder-construct-text-muted outline-none focus:border-construct-accent-primary/50 transition-colors w-36"
           />
         </div>
       </div>
@@ -371,17 +371,17 @@ export default function SkillMarketplace() {
       {/* My Skills Section */}
       {mySkills.length > 0 && (
         <div className="px-4 py-2 border-b border-construct-border/30">
-          <div className="text-[11px] font-semibold text-construct-accent mb-2">My Skills</div>
+          <div className="text-[11px] font-semibold text-construct-accent-primary mb-2">My Skills</div>
           <div className="flex flex-wrap gap-2">
             {mySkills.map((skill) => (
               <div
                 key={skill.id}
-                className="flex items-center gap-1.5 px-2 py-1 bg-construct-accent/10 border border-construct-accent/20 rounded-lg"
+                className="flex items-center gap-1.5 px-2 py-1 bg-construct-accent-primary/10 border border-construct-accent-primary/20 rounded-lg"
               >
-                <span className="text-[11px] text-construct-text">{skill.name}</span>
+                <span className="text-[11px] text-construct-text-primary">{skill.name}</span>
                 <button
                   onClick={() => removeFromMySkills(skill.id)}
-                  className="text-construct-textMuted hover:text-construct-error transition-colors"
+                  className="text-construct-text-muted hover:text-construct-semantic-error transition-colors"
                 >
                   <Trash2 size={10} />
                 </button>
@@ -399,12 +399,12 @@ export default function SkillMarketplace() {
               {/* Skill Header */}
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <h3 className="text-xs font-semibold text-construct-text">{skill.name}</h3>
-                  <p className="text-[10px] text-construct-textMuted mt-0.5 line-clamp-2">
+                  <h3 className="text-xs font-semibold text-construct-text-primary">{skill.name}</h3>
+                  <p className="text-[10px] text-construct-text-muted mt-0.5 line-clamp-2">
                     {skill.description}
                   </p>
                 </div>
-                <span className="px-1.5 py-0.5 bg-[rgba(255,255,255,0.06)] rounded text-[9px] text-construct-textMuted capitalize shrink-0">
+                <span className="px-1.5 py-0.5 bg-[rgba(255,255,255,0.06)] rounded text-[9px] text-construct-text-muted capitalize shrink-0">
                   {skill.category}
                 </span>
               </div>
@@ -416,12 +416,12 @@ export default function SkillMarketplace() {
                     <Star
                       key={i}
                       size={10}
-                      className={i < Math.floor(skill.rating) ? "text-[#f9e2af] fill-[#f9e2af]" : "text-construct-textMuted/30"}
+                      className={i < Math.floor(skill.rating) ? "text-[#f59e0b] fill-[#f59e0b]" : "text-construct-text-muted/30"}
                     />
                   ))}
-                  <span className="text-[10px] text-construct-textMuted ml-1">{skill.rating}</span>
+                  <span className="text-[10px] text-construct-text-muted ml-1">{skill.rating}</span>
                 </div>
-                <div className="flex items-center gap-1 text-[10px] text-construct-textMuted">
+                <div className="flex items-center gap-1 text-[10px] text-construct-text-muted">
                   <Download size={10} />
                   {skill.installs.toLocaleString()}
                 </div>
@@ -432,7 +432,7 @@ export default function SkillMarketplace() {
                 {skill.tools_needed.map((tool) => (
                   <span
                     key={tool}
-                    className="px-1.5 py-0.5 bg-construct-accent/10 rounded text-[9px] text-construct-accent"
+                    className="px-1.5 py-0.5 bg-construct-accent-primary/10 rounded text-[9px] text-construct-accent-primary"
                   >
                     {tool}
                   </span>
@@ -485,14 +485,14 @@ export default function SkillMarketplace() {
                     <div className="mt-2 pt-2 border-t border-construct-border/30 space-y-1">
                       {skill.steps.map((step) => (
                         <div key={step.order} className="flex gap-2 text-[10px]">
-                          <span className="shrink-0 w-4 h-4 flex items-center justify-center rounded-full bg-construct-accent/15 text-construct-accent font-medium">
+                          <span className="shrink-0 w-4 h-4 flex items-center justify-center rounded-full bg-construct-accent-primary/15 text-construct-accent-primary font-medium">
                             {step.order}
                           </span>
                           <div>
-                            <span className="text-construct-text font-medium">{step.action}</span>
-                            <span className="text-construct-textMuted ml-1">{step.description}</span>
+                            <span className="text-construct-text-primary font-medium">{step.action}</span>
+                            <span className="text-construct-text-muted ml-1">{step.description}</span>
                             {step.tool && (
-                              <span className="ml-1 px-1 bg-[rgba(255,255,255,0.06)] rounded text-[9px] text-construct-textMuted">
+                              <span className="ml-1 px-1 bg-[rgba(255,255,255,0.06)] rounded text-[9px] text-construct-text-muted">
                                 {step.tool}
                               </span>
                             )}
@@ -501,19 +501,19 @@ export default function SkillMarketplace() {
                       ))}
                       {/* Confidence */}
                       <div className="flex items-center gap-2 mt-2 pt-1 border-t border-construct-border/30">
-                        <span className="text-[10px] text-construct-textMuted">Confidence:</span>
+                        <span className="text-[10px] text-construct-text-muted">Confidence:</span>
                         <div className="flex-1 h-1.5 bg-[rgba(255,255,255,0.06)] rounded-full overflow-hidden">
                           <motion.div
                             className="h-full rounded-full"
                             style={{
-                              background: "linear-gradient(90deg, #89b4fa, #a6e3a1)",
+                              background: "linear-gradient(90deg, #6366f1, #10b981)",
                             }}
                             initial={{ width: 0 }}
                             animate={{ width: `${skill.confidence * 100}%` }}
                             transition={{ duration: 0.6, ease: "easeOut" }}
                           />
                         </div>
-                        <span className="text-[10px] text-construct-accent">
+                        <span className="text-[10px] text-construct-accent-primary">
                           {Math.round(skill.confidence * 100)}%
                         </span>
                       </div>
@@ -526,7 +526,7 @@ export default function SkillMarketplace() {
         </div>
 
         {filteredSkills.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-construct-textMuted">
+          <div className="flex flex-col items-center justify-center py-12 text-construct-text-muted">
             <Search size={24} className="mb-2 opacity-50" />
             <p className="text-xs">No skills found</p>
           </div>

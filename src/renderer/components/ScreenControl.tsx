@@ -54,10 +54,10 @@ const actionTypeIcons: Record<string, React.ReactNode> = {
 };
 
 const actionTypeColors: Record<string, string> = {
-  click: "#89b4fa",
-  type: "#a6e3a1",
+  click: "#6366f1",
+  type: "#10b981",
   key: "#cba6f7",
-  scroll: "#f9e2af",
+  scroll: "#f59e0b",
   drag: "#fab387",
   screenshot: "#94e2d5",
 };
@@ -156,8 +156,8 @@ export default function ScreenControl() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-construct-border/50">
         <div className="flex items-center gap-2">
-          <Monitor size={16} className="text-construct-accent" />
-          <span className="text-sm font-semibold text-construct-text">Screen Control</span>
+          <Monitor size={16} className="text-construct-accent-primary" />
+          <span className="text-sm font-semibold text-construct-text-primary">Screen Control</span>
           <StatusBadge
             status={sandboxMode ? "active" : "warning"}
             text={sandboxMode ? "Sandbox" : "Unsafe"}
@@ -166,16 +166,16 @@ export default function ScreenControl() {
         </div>
         <div className="flex items-center gap-2">
           {sandboxMode ? (
-            <ShieldCheck size={14} className="text-construct-success" />
+            <ShieldCheck size={14} className="text-construct-semantic-success" />
           ) : (
-            <Shield size={14} className="construct-warning" />
+            <Shield size={14} className="construct-semantic-warning" />
           )}
         </div>
       </div>
 
       {/* Safety Settings */}
       <div className="px-4 py-2 border-b border-construct-border/30">
-        <div className="text-[10px] font-semibold text-construct-textMuted uppercase tracking-wider mb-2">
+        <div className="text-[10px] font-semibold text-construct-text-muted uppercase tracking-wider mb-2">
           Safety Settings
         </div>
         <div className="flex items-center gap-4">
@@ -184,17 +184,17 @@ export default function ScreenControl() {
             <button
               onClick={() => setSandboxMode(!sandboxMode)}
               className={`relative w-8 h-4 rounded-full transition-colors ${
-                sandboxMode ? "bg-construct-success/40" : "bg-construct-textMuted/20"
+                sandboxMode ? "bg-construct-semantic-success/40" : "bg-construct-text-muted/20"
               }`}
             >
               <motion.div
                 className="absolute top-0.5 w-3 h-3 rounded-full"
-                style={{ backgroundColor: sandboxMode ? "#a6e3a1" : "#6c7086" }}
+                style={{ backgroundColor: sandboxMode ? "#10b981" : "#64748b" }}
                 animate={{ left: sandboxMode ? 16 : 2 }}
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
               />
             </button>
-            <span className="text-[10px] text-construct-text">Sandbox</span>
+            <span className="text-[10px] text-construct-text-primary">Sandbox</span>
           </label>
 
           {/* Consent Required */}
@@ -202,32 +202,32 @@ export default function ScreenControl() {
             <button
               onClick={() => setConsentRequired(!consentRequired)}
               className={`relative w-8 h-4 rounded-full transition-colors ${
-                consentRequired ? "bg-construct-accent/40" : "bg-construct-textMuted/20"
+                consentRequired ? "bg-construct-accent-primary/40" : "bg-construct-text-muted/20"
               }`}
             >
               <motion.div
                 className="absolute top-0.5 w-3 h-3 rounded-full"
-                style={{ backgroundColor: consentRequired ? "#89b4fa" : "#6c7086" }}
+                style={{ backgroundColor: consentRequired ? "#6366f1" : "#64748b" }}
                 animate={{ left: consentRequired ? 16 : 2 }}
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
               />
             </button>
-            <span className="text-[10px] text-construct-text">Require consent</span>
+            <span className="text-[10px] text-construct-text-primary">Require consent</span>
           </label>
 
           {/* Rate Limit */}
           <div className="flex items-center gap-2">
-            <Zap size={10} className="text-construct-textMuted" />
-            <span className="text-[10px] text-construct-textMuted">Rate:</span>
+            <Zap size={10} className="text-construct-text-muted" />
+            <span className="text-[10px] text-construct-text-muted">Rate:</span>
             <input
               type="range"
               min={1}
               max={60}
               value={rateLimit}
               onChange={(e) => setRateLimit(Number(e.target.value))}
-              className="w-16 h-1 accent-construct-accent"
+              className="w-16 h-1 accent-construct-accent-primary"
             />
-            <span className="text-[10px] text-construct-accent">{rateLimit}/min</span>
+            <span className="text-[10px] text-construct-accent-primary">{rateLimit}/min</span>
           </div>
         </div>
       </div>
@@ -245,8 +245,8 @@ export default function ScreenControl() {
             className={`
               flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all
               ${activeTab === tab.id
-                ? "bg-construct-accent/15 text-construct-accent"
-                : "text-construct-textMuted hover:text-construct-text"
+                ? "bg-construct-accent-primary/15 text-construct-accent-primary"
+                : "text-construct-text-muted hover:text-construct-text-primary"
               }
             `}
           >
@@ -300,11 +300,11 @@ export default function ScreenControl() {
 
                 {/* Speed */}
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-construct-textMuted">Speed:</span>
+                  <span className="text-[10px] text-construct-text-muted">Speed:</span>
                   <select
                     value={playbackSpeed}
                     onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
-                    className="h-6 px-1.5 bg-[rgba(255,255,255,0.04)] border border-construct-border/50 rounded text-[10px] text-construct-text outline-none"
+                    className="h-6 px-1.5 bg-[rgba(255,255,255,0.04)] border border-construct-border/50 rounded text-[10px] text-construct-text-primary outline-none"
                   >
                     <option value={0.25}>0.25x</option>
                     <option value={0.5}>0.5x</option>
@@ -319,13 +319,13 @@ export default function ScreenControl() {
               {actions.length > 0 && (
                 <div className="mt-2">
                   <div className="flex items-center justify-between text-[10px] mb-1">
-                    <span className="text-construct-textMuted">{actions.length} actions</span>
-                    <span className="text-construct-accent">{isPlaying ? "Playing..." : isRecording ? "Recording..." : "Ready"}</span>
+                    <span className="text-construct-text-muted">{actions.length} actions</span>
+                    <span className="text-construct-accent-primary">{isPlaying ? "Playing..." : isRecording ? "Recording..." : "Ready"}</span>
                   </div>
                   <div className="h-1 bg-[rgba(255,255,255,0.06)] rounded-full overflow-hidden">
                     <motion.div
                       className="h-full rounded-full"
-                      style={{ background: "linear-gradient(90deg, #89b4fa, #a6e3a1)" }}
+                      style={{ background: "linear-gradient(90deg, #6366f1, #10b981)" }}
                       animate={{ width: isPlaying ? "100%" : isRecording ? ["0%", "100%"] : "0%" }}
                       transition={{
                         duration: isRecording ? 2 : isPlaying ? 3 / playbackSpeed : 0,
@@ -356,10 +356,10 @@ export default function ScreenControl() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-medium text-construct-text capitalize">{action.actionType}</span>
-                      <span className="text-[9px] text-construct-textMuted font-mono">{formatTime(action.timestamp)}</span>
+                      <span className="text-[11px] font-medium text-construct-text-primary capitalize">{action.actionType}</span>
+                      <span className="text-[9px] text-construct-text-muted font-mono">{formatTime(action.timestamp)}</span>
                     </div>
-                    <div className="text-[10px] text-construct-textMuted truncate">
+                    <div className="text-[10px] text-construct-text-muted truncate">
                       {Object.entries(action.params)
                         .map(([k, v]) => `${k}: ${String(v)}`)
                         .join(", ")}
@@ -368,28 +368,28 @@ export default function ScreenControl() {
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => setExpandedAction(expandedAction === action.id ? null : action.id)}
-                      className="p-1 rounded text-construct-textMuted hover:text-construct-text hover:bg-[rgba(255,255,255,0.06)]"
+                      className="p-1 rounded text-construct-text-muted hover:text-construct-text-primary hover:bg-[rgba(255,255,255,0.06)]"
                     >
                       {expandedAction === action.id ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
                     </button>
                     <button
                       onClick={() => deleteAction(action.id)}
-                      className="p-1 rounded text-construct-textMuted hover:text-construct-error hover:bg-construct-error/10"
+                      className="p-1 rounded text-construct-text-muted hover:text-construct-semantic-error hover:bg-construct-semantic-error/10"
                     >
                       <Trash2 size={10} />
                     </button>
                   </div>
                   {action.approved ? (
-                    <CheckCircle size={12} className="text-construct-success shrink-0" />
+                    <CheckCircle size={12} className="text-construct-semantic-success shrink-0" />
                   ) : (
-                    <AlertTriangle size={12} className="text-construct-warning shrink-0" />
+                    <AlertTriangle size={12} className="text-construct-semantic-warning shrink-0" />
                   )}
                 </motion.div>
               ))}
             </div>
 
             {actions.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-8 text-construct-textMuted">
+              <div className="flex flex-col items-center justify-center py-8 text-construct-text-muted">
                 <MousePointer size={24} className="mb-2 opacity-50" />
                 <p className="text-xs">No recorded actions</p>
                 <p className="text-[10px] mt-1">Click Record to start capturing</p>
@@ -404,10 +404,10 @@ export default function ScreenControl() {
             {demoScreenshots.map((shot) => (
               <GlassCard key={shot.id} className="p-2" hover>
                 <div className="aspect-video bg-[rgba(255,255,255,0.04)] rounded-lg flex items-center justify-center mb-1.5 border border-construct-border/30">
-                  <Camera size={20} className="text-construct-textMuted/30" />
+                  <Camera size={20} className="text-construct-text-muted/30" />
                 </div>
-                <div className="text-[10px] font-medium text-construct-text">{shot.label}</div>
-                <div className="text-[9px] text-construct-textMuted">{formatTime(shot.timestamp)}</div>
+                <div className="text-[10px] font-medium text-construct-text-primary">{shot.label}</div>
+                <div className="text-[9px] text-construct-text-muted">{formatTime(shot.timestamp)}</div>
               </GlassCard>
             ))}
           </div>
@@ -424,17 +424,17 @@ export default function ScreenControl() {
                 <div
                   className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                     log.level === "success"
-                      ? "bg-construct-success"
+                      ? "bg-construct-semantic-success"
                       : log.level === "warning"
-                      ? "bg-construct-warning"
-                      : "bg-construct-accent"
+                      ? "bg-construct-semantic-warning"
+                      : "bg-construct-accent-primary"
                   }`}
                 />
-                <Clock size={10} className="text-construct-textMuted shrink-0" />
-                <span className="text-[9px] text-construct-textMuted font-mono w-16 shrink-0">
+                <Clock size={10} className="text-construct-text-muted shrink-0" />
+                <span className="text-[9px] text-construct-text-muted font-mono w-16 shrink-0">
                   {formatTime(log.timestamp)}
                 </span>
-                <span className="text-[11px] text-construct-text">{log.action}</span>
+                <span className="text-[11px] text-construct-text-primary">{log.action}</span>
               </div>
             ))}
           </div>

@@ -33,25 +33,25 @@ export function ToastNotification({
       icon: <CheckCircle size={16} />,
       bg: "rgba(166,227,161,0.1)",
       border: "rgba(166,227,161,0.25)",
-      iconColor: "#a6e3a1",
+      iconColor: "#10b981",
     },
     error: {
       icon: <AlertCircle size={16} />,
       bg: "rgba(243,139,168,0.1)",
       border: "rgba(243,139,168,0.25)",
-      iconColor: "#f38ba8",
+      iconColor: "#ef4444",
     },
     info: {
       icon: <Info size={16} />,
       bg: "rgba(137,180,250,0.1)",
       border: "rgba(137,180,250,0.25)",
-      iconColor: "#89b4fa",
+      iconColor: "#6366f1",
     },
     warning: {
       icon: <AlertTriangle size={16} />,
       bg: "rgba(249,226,175,0.1)",
       border: "rgba(249,226,175,0.25)",
-      iconColor: "#f9e2af",
+      iconColor: "#f59e0b",
     },
   };
 
@@ -73,15 +73,15 @@ export function ToastNotification({
         {config.icon}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-construct-text">{title}</div>
+        <div className="text-sm font-medium text-construct-text-primary">{title}</div>
         {message && (
-          <div className="text-xs text-construct-textMuted mt-0.5">{message}</div>
+          <div className="text-xs text-construct-text-muted mt-0.5">{message}</div>
         )}
       </div>
       {onDismiss && (
         <button
           onClick={onDismiss}
-          className="shrink-0 mt-0.5 text-construct-textMuted hover:text-construct-text transition-colors"
+          className="shrink-0 mt-0.5 text-construct-text-muted hover:text-construct-text-primary transition-colors"
         >
           <X size={14} />
         </button>

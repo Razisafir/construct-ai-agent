@@ -74,18 +74,18 @@ const ToastItem: React.FC<{ toastId: string }> = ({ toastId }) => {
       <div className="flex items-start gap-3">
         <Icon className={`w-5 h-5 ${config.iconColor} shrink-0 mt-0.5`} />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-construct-text leading-tight">
+          <p className="text-sm font-medium text-construct-text-primary leading-tight">
             {toast.title}
           </p>
           {toast.message && (
-            <p className="text-xs text-construct-textMuted mt-1 leading-relaxed">
+            <p className="text-xs text-construct-text-muted mt-1 leading-relaxed">
               {toast.message}
             </p>
           )}
         </div>
         <button
           onClick={handleDismiss}
-          className="shrink-0 p-0.5 rounded-md text-construct-textMuted hover:text-construct-text hover:bg-white/5 transition-colors"
+          className="shrink-0 p-0.5 rounded-md text-construct-text-muted hover:text-construct-text-primary hover:bg-white/5 transition-colors"
         >
           <X className="w-3.5 h-3.5" />
         </button>

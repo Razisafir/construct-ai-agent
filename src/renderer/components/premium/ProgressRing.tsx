@@ -26,8 +26,8 @@ export function ProgressRing({
       <svg width={size} height={size} className="-rotate-90">
         <defs>
           <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#89b4fa" />
-            <stop offset="100%" stopColor="#a6e3a1" />
+            <stop offset="0%" stopColor="#6366f1" />
+            <stop offset="100%" stopColor="#10b981" />
           </linearGradient>
         </defs>
         {/* Background ring */}
@@ -56,7 +56,7 @@ export function ProgressRing({
       </svg>
       {showPercent && (
         <span
-          className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-construct-text"
+          className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-construct-text-primary"
           style={{ fontSize: size * 0.28 }}
         >
           {Math.round(percent)}%
