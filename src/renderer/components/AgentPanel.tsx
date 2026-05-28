@@ -1,6 +1,8 @@
 import { useState, useCallback } from "react";
 import { TerminalOutput } from "./TerminalOutput";
 import type { LogEntry } from "./TerminalOutput";
+import AgentModeSelector, { type AgentMode } from "./AgentModeSelector";
+import InlineDiff, { type PendingChange } from "./InlineDiff";
 
 /* ─────────────────────── types ─────────────────────── */
 
@@ -70,6 +72,85 @@ const DEMO_STATE: AgentState = {
     { timestamp: "14:36:10", level: "INF", message: "checkpoint saved (auto)", source: "checkpoint" },
   ],
 };
+
+/** Demo pending changes for InlineDiff */
+const DEMO_PENDING_CHANGES: PendingChange[] = [
+  {
+    id: "change-1",
+    filePath: "src/components/LoginForm.tsx",
+    description: "Add form validation with zod schema",
+    accepted: null,
+    hunks: [
+      {
+        oldStart: 1,
+        oldLines: 3,
+        newStart: 1,
+        newLines: 8,
+        lines: [
+          { type: "context", content: "import { useState } from 'react';", lineNumber: 1 },
+          { type: "remove", content: "// TODO: add validation", lineNumber: 2 },
+          { type: "add", content: "import { z } from 'zod';", lineNumber: 2 },
+          { type: "add", content: "", lineNumber: 3 },
+          { type: "add", content: "const loginSchema = z.object({", lineNumber: 4 },
+          { type: "add", content: "  email: z.string().email(),", lineNumber: 5 },
+          { type: "add", content: "  password: z.string().min(8),", lineNumber: 6 },
+          { type: "add", content: "});", lineNumber: 7 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "change-2",
+    filePath: "src/types/auth.ts",
+    description: "Define User and Session types",
+    accepted: null,
+    hunks: [
+      {
+        oldStart: 1,
+        oldLines: 1,
+        newStart: 1,
+        newLines: 12,
+        lines: [
+          { type: "remove", content: "// auth types placeholder", lineNumber: 1 },
+          { type: "add", content: "export interface User {", lineNumber: 1 },
+          { type: "add", content: "  id: string;", lineNumber: 2 },
+          { type: "add", content: "  email: string;", lineNumber: 3 },
+          { type: "add", content: "  name: string;", lineNumber: 4 },
+          { type: "add", content: "  role: 'admin' | 'user';", lineNumber: 5 },
+          { type: "add", content: "}", lineNumber: 6 },
+          { type: "add", content: "", lineNumber: 7 },
+          { type: "add", content: "export interface Session {", lineNumber: 8 },
+          { type: "add", content: "  userId: string;", lineNumber: 9 },
+          { type: "add", content: "  token: string;", lineNumber: 10 },
+          { type: "add", content: "  expiresAt: number;", lineNumber: 11 },
+          { type: "add", content: "}", lineNumber: 12 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "change-3",
+    filePath: "src/middleware/jwt.ts",
+    description: "Implement JWT verification middleware",
+    accepted: null,
+    hunks: [
+      {
+        oldStart: 1,
+        oldLines: 0,
+        newStart: 1,
+        newLines: 6,
+        lines: [
+          { type: "add", content: "import jwt from 'jsonwebtoken';", lineNumber: 1 },
+          { type: "add", content: "import { Request, Response, NextFunction } from 'express';", lineNumber: 2 },
+          { type: "add", content: "", lineNumber: 3 },
+          { type: "add", content: "export function verifyToken(req: Request, res: Response, next: NextFunction) {", lineNumber: 4 },
+          { type: "add", content: "  const token = req.headers.authorization?.split(' ')[1];", lineNumber: 5 },
+          { type: "add", content: "  if (!token) return res.status(401).json({ error: 'Unauthorized' });", lineNumber: 6 },
+        ],
+      },
+    ],
+  },
+];
 
 /* ─────────────────────── sub-components ─────────────────────── */
 
@@ -231,6 +312,15 @@ function AgentPanel() {
   const [thinkingOpen, setThinkingOpen] = useState(true);
   const [fileInput, setFileInput] = useState("");
 
+  // ── new: agent mode state ──
+  const [agentMode, setAgentMode] = useState<AgentMode>("code");
+
+  // ── new: pending changes state ──
+  const [pendingChanges, setPendingChanges] = useState<PendingChange[]>(DEMO_PENDING_CHANGES);
+
+  // ── new: view mode (terminal vs diff) ──
+  const [viewMode, setViewMode] = useState<"terminal" | "diff">("terminal");
+
   const handleCommand = useCallback((cmd: string) => {
     setState((prev) => ({
       ...prev,
@@ -274,6 +364,79 @@ function AgentPanel() {
     setState((prev) => ({ ...prev, autoMode: !prev.autoMode }));
   }, []);
 
+  // ── new: diff action handlers ──
+  const handleAcceptChange = useCallback((id: string) => {
+    setPendingChanges((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, accepted: true } : c))
+    );
+    // Log acceptance
+    setState((prev) => ({
+      ...prev,
+      logs: [
+        ...prev.logs,
+        {
+          timestamp: new Date().toLocaleTimeString("en-US", { hour12: false }),
+          level: "OK",
+          message: `accepted changes in ${pendingChanges.find((c) => c.id === id)?.filePath ?? id}`,
+          source: "diff",
+        },
+      ],
+    }));
+  }, [pendingChanges]);
+
+  const handleRejectChange = useCallback((id: string) => {
+    setPendingChanges((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, accepted: false } : c))
+    );
+    setState((prev) => ({
+      ...prev,
+      logs: [
+        ...prev.logs,
+        {
+          timestamp: new Date().toLocaleTimeString("en-US", { hour12: false }),
+          level: "WRN",
+          message: `rejected changes in ${pendingChanges.find((c) => c.id === id)?.filePath ?? id}`,
+          source: "diff",
+        },
+      ],
+    }));
+  }, [pendingChanges]);
+
+  const handleAcceptAll = useCallback(() => {
+    setPendingChanges((prev) => prev.map((c) => ({ ...c, accepted: true })));
+    setState((prev) => ({
+      ...prev,
+      logs: [
+        ...prev.logs,
+        {
+          timestamp: new Date().toLocaleTimeString("en-US", { hour12: false }),
+          level: "OK",
+          message: "accepted all pending changes",
+          source: "diff",
+        },
+      ],
+    }));
+  }, []);
+
+  const handleRejectAll = useCallback(() => {
+    setPendingChanges((prev) => prev.map((c) => ({ ...c, accepted: false })));
+    setState((prev) => ({
+      ...prev,
+      logs: [
+        ...prev.logs,
+        {
+          timestamp: new Date().toLocaleTimeString("en-US", { hour12: false }),
+          level: "WRN",
+          message: "rejected all pending changes",
+          source: "diff",
+        },
+      ],
+    }));
+  }, []);
+
+  // Count of still-pending changes
+  const pendingCount = pendingChanges.filter((c) => c.accepted === null).length;
+
   return (
     <div
       style={{
@@ -286,21 +449,69 @@ function AgentPanel() {
         overflow: "hidden",
       }}
     >
-      {/* ── GOAL ── */}
+      {/* ── GOAL + MODE SELECTOR ── */}
       <div
         style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
           padding: "8px 12px",
           borderBottom: "1px solid rgba(255,255,255,0.04)",
-          fontSize: "12px",
-          fontWeight: 600,
-          color: C.t1,
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
         }}
-        title={state.goal}
       >
-        GOAL: {state.goal}
+        {/* Agent Mode Selector */}
+        <AgentModeSelector mode={agentMode} onChange={setAgentMode} />
+
+        {/* Goal text */}
+        <div
+          style={{
+            flex: 1,
+            fontSize: "11px",
+            fontWeight: 600,
+            color: C.t1,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            minWidth: 0,
+          }}
+          title={state.goal}
+        >
+          GOAL: {state.goal}
+        </div>
+
+        {/* Pending changes badge */}
+        {pendingCount > 0 && (
+          <button
+            onClick={() => setViewMode(viewMode === "diff" ? "terminal" : "diff")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              height: 20,
+              padding: "0 8px",
+              backgroundColor: viewMode === "diff" ? `${C.accent}22` : C.s2,
+              border: `1px solid ${viewMode === "diff" ? C.accent : "rgba(255,255,255,0.04)"}`,
+              color: viewMode === "diff" ? C.accent : C.t3,
+              fontFamily: "inherit",
+              fontSize: 9,
+              fontWeight: 600,
+              letterSpacing: "0.06em",
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+          >
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                backgroundColor: viewMode === "diff" ? C.accent : C.wrn,
+                display: "inline-block",
+              }}
+            />
+            {pendingCount} pending
+          </button>
+        )}
       </div>
 
       {/* ── STATUS BAR ── */}
@@ -320,16 +531,33 @@ function AgentPanel() {
         <ControlButton label="STOP" />
         <ControlButton label="CHECKPOINT" />
         <ControlButton label="LOG" />
+        {/* Toggle between terminal and diff view */}
+        {pendingCount > 0 && (
+          <ControlButton
+            label={viewMode === "diff" ? "TERMINAL" : "DIFF"}
+            onClick={() => setViewMode(viewMode === "diff" ? "terminal" : "diff")}
+          />
+        )}
         <AutoToggle enabled={state.autoMode} onToggle={toggleAuto} />
       </div>
 
-      {/* ── TERMINAL OUTPUT ── */}
+      {/* ── MAIN CONTENT: Terminal or InlineDiff ── */}
       <div style={{ flex: 1, minHeight: 0 }}>
-        <TerminalOutput
-          logs={state.logs}
-          onCommand={handleCommand}
-          showInput
-        />
+        {viewMode === "diff" && pendingCount > 0 ? (
+          <InlineDiff
+            changes={pendingChanges}
+            onAccept={handleAcceptChange}
+            onReject={handleRejectChange}
+            onAcceptAll={handleAcceptAll}
+            onRejectAll={handleRejectAll}
+          />
+        ) : (
+          <TerminalOutput
+            logs={state.logs}
+            onCommand={handleCommand}
+            showInput
+          />
+        )}
       </div>
 
       {/* ── THINKING ── */}

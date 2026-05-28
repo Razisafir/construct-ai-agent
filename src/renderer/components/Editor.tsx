@@ -1,6 +1,6 @@
 import { Editor as MonacoEditor, loader } from "@monaco-editor/react";
-import { useState, useCallback } from "react";
-import { X, FileCode } from "lucide-react";
+import { useState, useCallback, useMemo } from "react";
+import TabBar, { type EditorTab } from "./TabBar";
 
 loader.config({
   paths: {
@@ -8,27 +8,20 @@ loader.config({
   },
 });
 
-const COLORS = {
+const C = {
   base: "#0c0c10",
-  surface1: "#12121a",
-  surface2: "#1a1a24",
-  surface3: "#22222e",
+  s1: "#12121a",
+  s2: "#1a1a24",
+  s3: "#22222e",
   accent: "#6366f1",
-  textPrimary: "#e8e8ec",
-  textSecondary: "#94949c",
-  muted: "#6b6b73",
-  dim: "#4a4a52",
+  t1: "#e8e8ec",
+  t2: "#94949c",
+  t3: "#6b6b73",
+  t4: "#4a4a52",
   border: "rgba(255,255,255,0.04)",
 };
 
-interface Tab {
-  id: string;
-  name: string;
-  path: string;
-  language: string;
-  active: boolean;
-  modified: boolean;
-}
+const ff = '"Geist Mono", "JetBrains Mono", monospace';
 
 const defaultCode = `import { useState } from "react";
 
@@ -57,66 +50,162 @@ export default function Example({ title, count = 0 }: Props) {
 }
 `;
 
-const initialTabs: Tab[] = [
-  {
-    id: "1",
-    name: "App.tsx",
-    path: "src/App.tsx",
-    language: "typescript",
-    active: true,
-    modified: true,
-  },
-  {
-    id: "2",
-    name: "Sidebar.tsx",
-    path: "src/components/Sidebar.tsx",
-    language: "typescript",
-    active: false,
-    modified: true,
-  },
-  {
-    id: "3",
-    name: "main.tsx",
-    path: "src/main.tsx",
-    language: "typescript",
-    active: false,
-    modified: false,
-  },
-];
+/* ─────────────────────── tab helpers ─────────────────────── */
+
+let tabIdCounter = 0;
+
+function createTab(
+  fileName: string,
+  filePath: string,
+  language: string,
+  content: string,
+  isModified: boolean = false
+): EditorTab {
+  return {
+    id: `tab-${++tabIdCounter}-${Date.now().toString(36)}`,
+    fileName,
+    filePath,
+    language,
+    content,
+    isModified,
+    isActive: false,
+  };
+}
+
+/* ─────────────────────── main component ─────────────────────── */
 
 function Editor() {
-  const [tabs, setTabs] = useState<Tab[]>(initialTabs);
-  const [hoveredTab, setHoveredTab] = useState<string | null>(null);
-  const [editorContent, setEditorContent] = useState(defaultCode);
+  // ── tab state ──
+  const [tabs, setTabs] = useState<EditorTab[]>(() => [
+    createTab("App.tsx", "src/App.tsx", "typescript", defaultCode, true),
+    createTab("Sidebar.tsx", "src/components/Sidebar.tsx", "typescript", "// Sidebar component code\n", true),
+    createTab("main.tsx", "src/main.tsx", "typescript", "// main entry point\n", false),
+  ]);
 
-  const activeTab = tabs.find((t) => t.active) ?? tabs[0];
+  // Activate first tab on mount
+  useState(() => {
+    setTabs((prev) =>
+      prev.map((t, i) => ({ ...t, isActive: i === 0 }))
+    );
+  });
 
+  // ── derived: active tab ──
+  const activeTab = useMemo(
+    () => tabs.find((t) => t.isActive) ?? tabs[0] ?? null,
+    [tabs]
+  );
+
+  const activeTabId = activeTab?.id ?? null;
+
+  // ── actions ──
+
+  /** Activate a tab by its id */
   const activateTab = useCallback((id: string) => {
     setTabs((prev) =>
-      prev.map((t) => ({ ...t, active: t.id === id }))
+      prev.map((t) => ({ ...t, isActive: t.id === id }))
     );
   }, []);
 
-  const closeTab = useCallback(
-    (id: string, e: React.MouseEvent) => {
-      e.stopPropagation();
-      setTabs((prev) => {
-        if (prev.length <= 1) return prev;
-        const idx = prev.findIndex((t) => t.id === id);
-        const next = prev.filter((t) => t.id !== id);
-        if (prev[idx]?.active && next.length > 0) {
-          const newIdx = Math.min(idx, next.length - 1);
-          next[newIdx] = { ...next[newIdx], active: true };
+  /** Close a tab by its id. If closing the active tab, activate the nearest neighbor. */
+  const closeTab = useCallback((id: string) => {
+    setTabs((prev) => {
+      if (prev.length <= 1) {
+        // Keep at least one tab
+        const onlyTab = prev[0];
+        if (onlyTab) {
+          return [{ ...onlyTab, isModified: false, isActive: true }];
         }
-        return next;
+        return prev;
+      }
+      const idx = prev.findIndex((t) => t.id === id);
+      const wasActive = prev[idx]?.isActive ?? false;
+      const remaining = prev.filter((t) => t.id !== id);
+      if (wasActive && remaining.length > 0) {
+        const newIdx = Math.min(idx, remaining.length - 1);
+        remaining[newIdx] = { ...remaining[newIdx], isActive: true };
+      }
+      return remaining;
+    });
+  }, []);
+
+  /** Open a file as a tab. If already open, activate it. */
+  const openTab = useCallback(
+    (file: {
+      fileName: string;
+      filePath: string;
+      language?: string;
+      content?: string;
+    }) => {
+      setTabs((prev) => {
+        const existing = prev.find((t) => t.filePath === file.filePath);
+        if (existing) {
+          return prev.map((t) => ({
+            ...t,
+            isActive: t.id === existing.id,
+          }));
+        }
+        const newTab = createTab(
+          file.fileName,
+          file.filePath,
+          file.language ?? "typescript",
+          file.content ?? "",
+          false
+        );
+        return [...prev.map((t) => ({ ...t, isActive: false })), { ...newTab, isActive: true }];
       });
     },
     []
   );
 
-  const handleEditorChange = useCallback((value: string | undefined) => {
-    setEditorContent(value ?? "");
-  }, []);
+  // ── editor change handler ──
+  const handleEditorChange = useCallback(
+    (value: string | undefined) => {
+      if (!activeTab) return;
+      const newContent = value ?? "";
+      setTabs((prev) =>
+        prev.map((t) =>
+          t.id === activeTab.id
+            ? { ...t, content: newContent, isModified: true }
+            : t
+        )
+      );
+    },
+    [activeTab]
+  );
+
+  // ── monaco options ──
+  const monacoOptions = useMemo(
+    () => ({
+      fontSize: 12,
+      fontFamily: "'Geist Mono', 'JetBrains Mono', monospace",
+      minimap: { enabled: false },
+      scrollBeyondLastLine: false,
+      automaticLayout: true,
+      lineNumbers: "on" as const,
+      renderLineHighlight: "line" as const,
+      tabSize: 2,
+      insertSpaces: true,
+      wordWrap: "on" as const,
+      folding: true,
+      bracketPairColorization: { enabled: true },
+      guides: {
+        bracketPairs: true,
+        indentation: true,
+      },
+      scrollbar: {
+        useShadows: false,
+        verticalScrollbarSize: 8,
+        horizontalScrollbarSize: 8,
+      },
+      padding: { top: 8 },
+      cursorStyle: "line" as const,
+      cursorBlinking: "blink" as const,
+      smoothScrolling: false,
+      lineNumbersMinChars: 3,
+      lineDecorationsWidth: 0,
+    }),
+    []
+  );
 
   return (
     <div
@@ -125,151 +214,68 @@ function Editor() {
         flexDirection: "column",
         width: "100%",
         height: "100%",
-        backgroundColor: COLORS.base,
+        backgroundColor: C.base,
+        fontFamily: ff,
       }}
     >
-      {/* Tab Bar */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          height: 28,
-          backgroundColor: COLORS.surface1,
-          borderBottom: `1px solid ${COLORS.border}`,
-          overflowX: "auto",
-          flexShrink: 0,
-        }}
-      >
-        {tabs.map((tab) => {
-          const isActive = tab.active;
-          const showClose = hoveredTab === tab.id;
+      {/* ── Tab Bar ── */}
+      <TabBar
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onActivate={activateTab}
+        onClose={closeTab}
+        onOpen={openTab}
+      />
 
-          return (
-            <button
-              key={tab.id}
-              onClick={() => activateTab(tab.id)}
-              onMouseEnter={() => setHoveredTab(tab.id)}
-              onMouseLeave={() => setHoveredTab(null)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                height: "100%",
-                padding: "0 10px",
-                gap: 6,
-                border: "none",
-                borderRight: `1px solid ${COLORS.border}`,
-                borderBottom: isActive
-                  ? `2px solid ${COLORS.accent}`
-                  : `2px solid transparent`,
-                backgroundColor: isActive ? COLORS.surface2 : "transparent",
-                color: isActive ? COLORS.textPrimary : COLORS.muted,
-                cursor: "pointer",
-                flexShrink: 0,
-                whiteSpace: "nowrap",
-                fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-                fontSize: 11,
-                transition: "background-color 50ms",
-                position: "relative",
-              }}
-            >
-              <FileCode size={12} style={{ flexShrink: 0 }} />
-              <span>{tab.name}</span>
-              {tab.modified && (
-                <span
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
-                    backgroundColor: COLORS.accent,
-                    flexShrink: 0,
-                  }}
-                />
-              )}
-              <span
-                onClick={(e) => closeTab(tab.id, e)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 14,
-                  height: 14,
-                  marginLeft: 2,
-                  opacity: showClose ? 1 : 0,
-                  transition: "opacity 50ms",
-                  flexShrink: 0,
-                }}
-              >
-                <X size={12} />
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Breadcrumb Path */}
+      {/* ── Breadcrumb Path ── */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           height: 22,
           padding: "0 12px",
-          backgroundColor: COLORS.base,
-          borderBottom: `1px solid ${COLORS.border}`,
+          backgroundColor: C.base,
+          borderBottom: `1px solid ${C.border}`,
           flexShrink: 0,
         }}
       >
         <span
           style={{
             fontSize: 10,
-            fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-            color: COLORS.dim,
+            fontFamily: ff,
+            color: C.t4,
             letterSpacing: "0.02em",
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
           }}
         >
-          {activeTab?.path || "src/App.tsx"}
+          {activeTab?.filePath ?? "no file open"}
         </span>
+        {activeTab?.isModified && (
+          <span
+            style={{
+              marginLeft: 8,
+              fontSize: 9,
+              color: C.accent,
+              fontFamily: ff,
+            }}
+          >
+            ● modified
+          </span>
+        )}
       </div>
 
-      {/* Monaco Editor */}
+      {/* ── Monaco Editor ── */}
       <div style={{ flex: 1, minHeight: 0 }}>
         <MonacoEditor
+          key={activeTabId ?? "empty"}
           height="100%"
-          language="typescript"
+          language={activeTab?.language ?? "typescript"}
           theme="vs-dark"
-          value={editorContent}
+          value={activeTab?.content ?? ""}
           onChange={handleEditorChange}
-          options={{
-            fontSize: 12,
-            fontFamily: "'Geist Mono', 'JetBrains Mono', monospace",
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-            automaticLayout: true,
-            lineNumbers: "on",
-            renderLineHighlight: "line",
-            tabSize: 2,
-            insertSpaces: true,
-            wordWrap: "on",
-            folding: true,
-            bracketPairColorization: { enabled: true },
-            guides: {
-              bracketPairs: true,
-              indentation: true,
-            },
-            scrollbar: {
-              useShadows: false,
-              verticalScrollbarSize: 8,
-              horizontalScrollbarSize: 8,
-            },
-            padding: { top: 8 },
-            cursorStyle: "line",
-            cursorBlinking: "blink",
-            smoothScrolling: false,
-            lineNumbersMinChars: 3,
-            lineDecorationsWidth: 0,
-          }}
+          options={monacoOptions}
           loading={
             <div
               style={{
@@ -279,8 +285,8 @@ function Editor() {
                 width: "100%",
                 height: "100%",
                 fontSize: 11,
-                color: COLORS.dim,
-                fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+                color: C.t4,
+                fontFamily: ff,
               }}
             >
               loading editor...
