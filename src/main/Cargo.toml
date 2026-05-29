@@ -15,7 +15,7 @@ name = "construct"
 path = "src/main.rs"
 
 [dependencies]
-tauri = { version = "2", features = ["wry"] }
+tauri = { version = "2", features = ["wry", "tray-icon"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-shell = "2"

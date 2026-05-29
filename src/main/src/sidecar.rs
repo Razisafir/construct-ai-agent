@@ -6,6 +6,7 @@
 use std::sync::Arc;
 use parking_lot::Mutex;
 use tauri::{AppHandle, Emitter, Manager};
+use tauri_plugin_shell::ShellExt;
 
 /// Shared state for the backend sidecar.
 #[derive(Debug)]
@@ -82,7 +83,7 @@ pub fn spawn_backend(app: &AppHandle) -> Result<u16, String> {
     tauri::async_runtime::spawn(async move {
         while let Some(event) = rx.recv().await {
             match event {
-                tauri_plugin_shell::process::ShellEvent::Stdout(line) => {
+                tauri_plugin_shell::process::CommandEvent::Stdout(line) => {
                     let line = String::from_utf8_lossy(&line);
                     log::info!("[backend] {}", line.trim());
                     // Check if backend reports it's ready
@@ -92,16 +93,16 @@ pub fn spawn_backend(app: &AppHandle) -> Result<u16, String> {
                         let _ = app_handle.emit("backend:ready", state.port);
                     }
                 }
-                tauri_plugin_shell::process::ShellEvent::Stderr(line) => {
+                tauri_plugin_shell::process::CommandEvent::Stderr(line) => {
                     let line = String::from_utf8_lossy(&line);
                     log::warn!("[backend stderr] {}", line.trim());
                 }
-                tauri_plugin_shell::process::ShellEvent::Error(e) => {
+                tauri_plugin_shell::process::CommandEvent::Error(e) => {
                     log::error!("Backend sidecar error: {}", e);
                     let mut state = backend_state.lock();
                     state.healthy = false;
                 }
-                tauri_plugin_shell::process::ShellEvent::Terminated(payload) => {
+                tauri_plugin_shell::process::CommandEvent::Terminated(payload) => {
                     log::error!("Backend sidecar terminated: code={:?}, signal={:?}", payload.code, payload.signal);
                     let mut state = backend_state.lock();
                     state.healthy = false;

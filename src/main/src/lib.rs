@@ -7,7 +7,7 @@ pub mod tray;
 use commands::agent::AgentState;
 use commands::autonomous::AutonomousManager;
 use sidecar::{spawn_backend, wait_for_backend};
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
