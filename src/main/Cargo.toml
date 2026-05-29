@@ -4,11 +4,11 @@ version = "0.1.0"
 description = "Construct - A Tauri Desktop App"
 authors = ["Razisafir"]
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.77.2"
 
 [lib]
 name = "construct_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+crate-type = ["cdylib", "rlib"]
 
 [[bin]]
 name = "construct"
@@ -31,11 +31,12 @@ uuid = { version = "1.11", features = ["v4", "serde"] }
 parking_lot = "0.12"
 
 # -- HTTP client for calling Python backend --
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
 tokio = { version = "1", features = ["rt-multi-thread", "time"] }
 
 # -- logging --
 log = "0.4"
+tauri-plugin-log = "2"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

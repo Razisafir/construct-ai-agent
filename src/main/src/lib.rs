@@ -15,6 +15,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_log::Builder::new().build())
         .setup(|app| {
             // ── 1. Spawn Python backend sidecar ─────────────────────────────
             let port = match spawn_backend(app) {

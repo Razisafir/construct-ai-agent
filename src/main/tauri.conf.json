@@ -44,21 +44,17 @@
       "icons/icon-512x512.png"
     ],
     "externalBin": ["bin/agent-backend"],
-    "resources": {
-      "../../agent-backend": "agent-backend"
-    },
     "copyright": "2026 Construct AI Inc. All Rights Reserved.",
     "category": "DeveloperTool",
     "shortDescription": "AI coding agent that never forgets",
     "longDescription": "Autonomous AI coding assistant with persistent memory, multi-agent teams, and 24/7 background execution.",
     "linux": {
       "deb": {
-        "depends": ["libgtk-3-0", "libwebkit2gtk-4.0-37", "libappindicator3-1"]
+        "depends": ["libgtk-3-0", "libwebkit2gtk-4.1-41", "libappindicator3-1"]
       }
     },
     "windows": {
       "nsis": {
-        "installerIcon": "icons/icon.ico",
         "installMode": "both"
       }
     },
@@ -69,10 +65,10 @@
   },
   "plugins": {
     "updater": {
-      "active": true,
-      "endpoints": ["https://api.construct.ai/releases/{{target}}/{{arch}}/{{current_version}}"],
-      "dialog": true,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEYxNkUxNUI3QjRGN0I2NDYKUldTU0FFeE9KeVlPSnlub0VYcTJqcnZ5bFd3ZzN0NmFxRUdBb0tDZFlBUzJmQUV4WDRjM01pMWMK"
+      "active": false,
+      "endpoints": [],
+      "dialog": false,
+      "pubkey": ""
     }
   }
 }

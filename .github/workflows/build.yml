@@ -187,6 +187,7 @@ jobs:
         shell: bash
         run: |
           cd agent-backend
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install -r requirements.txt pyinstaller
           python pyinstaller_build.py
 

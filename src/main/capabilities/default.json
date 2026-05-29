@@ -14,7 +14,7 @@
       "allow": [
         {
           "args": true,
-          "cmd": "$APPDATA/agent-backend/agent-backend",
+          "cmd": "agent-backend",
           "name": "agent-backend",
           "sidecar": true
         }
@@ -25,7 +25,7 @@
       "allow": [
         {
           "args": true,
-          "cmd": "$APPDATA/agent-backend/agent-backend",
+          "cmd": "agent-backend",
           "name": "agent-backend",
           "sidecar": true
         }

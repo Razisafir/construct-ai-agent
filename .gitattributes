@@ -25,3 +25,9 @@
 *.woff2 binary
 *.ttf binary
 *.eot binary
+*.icns binary
+*.exe binary
+*.AppImage binary
+*.dmg binary
+*.deb binary
+*.rpm binary

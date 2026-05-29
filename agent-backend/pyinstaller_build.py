@@ -81,22 +81,32 @@ def build_sidecar() -> None:
         "--hidden-import", "scipy",
         "--hidden-import", "tokenizers",
         "--hidden-import", "onnxruntime",
-        # Collect entire packages
+        # Collect packages (use --collect-data instead of --collect-all where possible)
         "--collect-all", "chromadb",
-        "--collect-all", "sentence_transformers",
-        "--collect-all", "transformers",
-        "--collect-all", "torch",
+        "--collect-data", "sentence_transformers",
+        "--collect-data", "transformers",
+        "--hidden-import", "torch.jit",
+        "--hidden-import", "torch.nn",
+        "--hidden-import", "torch.utils",
+        # Exclude unused torch submodules to reduce bundle size
+        "--exclude-module", "torch.distributions",
+        "--exclude-module", "torch.testing",
+        "--exclude-module", "torch.tensorboard",
+        "--exclude-module", "torch.benchmark",
+        "--exclude-module", "torch.ao",
+        "--exclude-module", "torch.export",
+        "--exclude-module", "torch._dynamo",
+        "--exclude-module", "torch._inductor",
+        "--exclude-module", "torch.fx",
+        "--exclude-module", "torch.multiprocessing",
         "--collect-data", "tokenizers",
         # Clean build
         "--clean",
         "--noconfirm",
     ]
     
-    # On Windows, use console mode for backend (no GUI window)
-    if sys.platform == "win32":
-        args.append("--console")
-    else:
-        args.append("--console")
+    # Use console mode for backend (no GUI window)
+    args.append("--console")
     
     import PyInstaller.__main__
     PyInstaller.__main__.run(args)
@@ -104,9 +114,9 @@ def build_sidecar() -> None:
     output_path = os.path.join(dist_path, output_name)
     if os.path.exists(output_path):
         size_mb = os.path.getsize(output_path) / (1024 * 1024)
-        print(f"✅ Built sidecar: {output_path} ({size_mb:.1f} MB)")
+        print(f"Built sidecar: {output_path} ({size_mb:.1f} MB)")
     else:
-        print(f"❌ Build failed: {output_path} not found")
+        print(f"Build failed: {output_path} not found")
         sys.exit(1)
 
 
