@@ -55,7 +55,7 @@ jobs:
           cp src/main/target/release/bundle/msi/*.msi release/ || true
           cp src/main/target/release/bundle/nsis/*.exe release/ || true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-windows
           path: release/*
@@ -106,7 +106,7 @@ jobs:
           mkdir -p release
           cp src/main/target/release/bundle/dmg/*.dmg release/ || true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-macos
           path: release/*
@@ -162,7 +162,7 @@ jobs:
           cp src/main/target/release/bundle/appimage/*.AppImage release/ || true
           cp src/main/target/release/bundle/rpm/*.rpm release/ || true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-linux
           path: release/*
