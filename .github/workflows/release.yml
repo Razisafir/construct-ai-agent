@@ -42,8 +42,13 @@ jobs:
         run: |
           cd agent-backend
           python pyinstaller_build.py
+          echo "--- Sidecar binary ---"
+          ls -la ../src/main/bin/
 
       - run: npm ci
+
+      - name: Install Tauri CLI v2
+        run: npm install @tauri-apps/cli@^2
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
@@ -82,11 +87,15 @@ jobs:
         run: |
           cd agent-backend
           python pyinstaller_build.py
+          echo "--- arm64 sidecar ---"
+          ls -la ../src/main/bin/
 
       - name: Build sidecar (x86_64 via Rosetta)
         run: |
           cd agent-backend
           arch -x86_64 python pyinstaller_build.py || echo "Rosetta not available, using arm64 only"
+          echo "--- sidecar bin dir ---"
+          ls -la ../src/main/bin/
 
       - name: Create universal binary with lipo
         run: |
@@ -96,14 +105,21 @@ jobs:
           UNI="agent-backend-universal-apple-darwin"
           if [ -f "src/main/bin/${X86}" ] && [ -f "src/main/bin/${ARM64}" ]; then
             lipo -create "src/main/bin/${X86}" "src/main/bin/${ARM64}" -output "src/main/bin/${UNI}"
-            cp "src/main/bin/${UNI}" "src/main/bin/${ARM64}"
-            cp "src/main/bin/${UNI}" "src/main/bin/${X86}"
             echo "Universal binary created"
+            ls -la "src/main/bin/${UNI}"
           else
-            echo "Universal binary not possible, using native arch"
+            echo "Universal binary not possible, using native arch only"
+            # For universal-apple-darwin target, we need the universal binary.
+            # If we can't create it, fall back to arm64 only.
+            if [ -f "src/main/bin/${ARM64}" ]; then
+              echo "Using arm64 binary as universal fallback"
+            fi
           fi
 
       - run: npm ci
+
+      - name: Install Tauri CLI v2
+        run: npm install @tauri-apps/cli@^2
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
@@ -111,6 +127,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: './src/main'
+          # Only build for arm64 if universal not available, otherwise universal
           args: '--target universal-apple-darwin'
 
   # -- Linux -------------------------------------------------------------
@@ -151,8 +168,13 @@ jobs:
         run: |
           cd agent-backend
           python pyinstaller_build.py
+          echo "--- Sidecar binary ---"
+          ls -la ../src/main/bin/
 
       - run: npm ci
+
+      - name: Install Tauri CLI v2
+        run: npm install @tauri-apps/cli@^2
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0

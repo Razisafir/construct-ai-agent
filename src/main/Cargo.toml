@@ -42,5 +42,4 @@ tauri-plugin-log = "2"
 tauri-build = "2"
 
 [features]
-default = ["custom-protocol"]
-custom-protocol = ["tauri/custom-protocol"]
+default = []
