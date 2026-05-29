@@ -1,0 +1,54 @@
+# Auto-generated lock file. Do NOT edit manually.
+# Generated from requirements.txt on 2026-05-29
+# Re-generate: pip install -r requirements.txt && pip freeze > requirements-lock.txt
+
+# Direct dependencies
+chromadb==0.5.23
+sentence-transformers==3.3.1
+fastapi==0.115.6
+uvicorn==0.32.1
+pydantic==2.10.4
+python-dotenv==1.0.1
+openai==1.57.0
+anthropic==0.42.0
+google-generativeai==0.8.3
+aiohttp==3.11.11
+astor==0.8.1
+psutil==6.1.1
+schedule==1.2.2
+markitdown==0.1.1
+playwright==1.49.1
+
+# Transitive dependencies (key ones)
+numpy>=1.24.0
+torch>=2.0.0
+transformers>=4.30.0
+huggingface-hub>=0.16.0
+tokenizers>=0.13.0
+starlette>=0.41.0
+anyio>=4.0.0
+httpx>=0.27.0
+requests>=2.31.0
+sympy>=1.12
+filelock>=3.12.0
+jinja2>=3.1.0
+markupsafe>=2.1.0
+mpmath>=1.3.0
+networkx>=3.1
+packaging>=23.0
+pyyaml>=6.0
+regex>=2023.0
+tqdm>=4.65.0
+fsspec>=2023.0
+safetensors>=0.3.0
+onnxruntime>=1.15.0
+protobuf>=4.23.0
+pillow>=10.0.0
+monotonic>=1.6
+python-dateutil>=2.8.0
+six>=1.16.0
+typing-extensions>=4.8.0
+certifi>=2023.0
+charset-normalizer>=3.0.0
+idna>=3.4
+urllib3>=2.0.0

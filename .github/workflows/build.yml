@@ -13,7 +13,34 @@ env:
   NODE_VERSION: '20'
 
 jobs:
-  # ── Frontend checks (non-blocking) ────────────────────────────────────────
+  # -- Lock file integrity check --------------------------------------------
+  check-lock-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify requirements-lock.txt is in sync
+        run: |
+          cd agent-backend
+          pip install -r requirements.txt
+          pip freeze > requirements-fresh.txt
+          diff requirements-lock.txt requirements-fresh.txt || (echo "Lock file out of sync. Run: pip freeze > requirements-lock.txt" && exit 1)
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Verify package-lock.json is in sync
+        run: |
+          npm ci --package-lock-only
+          git diff --exit-code package-lock.json || (echo "package-lock.json out of sync. Run: npm install" && exit 1)
+
+  # -- Frontend checks (non-blocking) ---------------------------------------
   check-frontend:
     runs-on: ubuntu-latest
     continue-on-error: true
@@ -28,14 +55,15 @@ jobs:
       - run: npm ci
 
       - name: TypeScript check
-        run: npx tsc --noEmit || true
+        run: npx tsc --noEmit
 
       - name: Vite production build
-        run: npx vite build || true
+        run: npx vite build
 
-  # ── Windows MSI + EXE ─────────────────────────────────────────────────────
+  # -- Windows MSI + EXE ----------------------------------------------------
   build-windows:
     runs-on: windows-latest
+    needs: [check-lock-files]
     steps:
       - uses: actions/checkout@v4
 
@@ -74,9 +102,10 @@ jobs:
           path: src/main/target/release/construct.exe
           retention-days: 7
 
-  # ── macOS DMG (Universal Intel + Apple Silicon) ───────────────────────────
+  # -- macOS DMG (Universal Intel + Apple Silicon) --------------------------
   build-macos:
     runs-on: macos-latest
+    needs: [check-lock-files]
     steps:
       - uses: actions/checkout@v4
 
@@ -108,9 +137,10 @@ jobs:
           path: src/main/target/release/bundle/dmg/*.dmg
           retention-days: 7
 
-  # ── Linux (.deb + .AppImage) ──────────────────────────────────────────────
+  # -- Linux (.deb + .AppImage) ---------------------------------------------
   build-linux:
     runs-on: ubuntu-latest
+    needs: [check-lock-files]
     steps:
       - uses: actions/checkout@v4
 
@@ -153,8 +183,8 @@ jobs:
           path: src/main/target/release/bundle/appimage/*.AppImage
           retention-days: 7
 
-  # ── Python backend tests ───────────────────────────────────────────────────
-  test-backend:
+  # -- Python backend tests (blocking) --------------------------------------
+  test-python:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -166,18 +196,48 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('agent-backend/requirements.txt', 'agent-backend/requirements-test.txt') }}
+          restore-keys: ${{ runner.os }}-pip-
+
       - name: Install dependencies
         run: |
           cd agent-backend
-          pip install -r requirements.txt
-          pip install pytest pytest-asyncio
+          pip install -r requirements.txt -r requirements-test.txt
 
-      - name: Run tests
+      - name: Lint with ruff
         run: |
           cd agent-backend
-          pytest tests/ -v --tb=short || true
+          ruff check . --select E,W,F,I,N
 
-  # ── Rust unit tests ───────────────────────────────────────────────────────
+      - name: Format check with black
+        run: |
+          cd agent-backend
+          black --check .
+
+      - name: Run unit tests with coverage
+        run: |
+          cd agent-backend
+          pytest tests/unit -v --tb=short --cov=. --cov-report=term-missing --cov-fail-under=80
+
+      - name: Run integration tests
+        run: |
+          cd agent-backend
+          pytest tests/integration -v --tb=short
+
+      - name: Run E2E tests
+        run: |
+          cd agent-backend
+          uvicorn app:app --host 127.0.0.1 --port 8000 &
+          BACKEND_PID=$!
+          sleep 3
+          pytest tests/e2e -v --tb=short
+          kill $BACKEND_PID 2>/dev/null
+
+  # -- Rust tests + lint (blocking) -----------------------------------------
   test-rust:
     runs-on: ubuntu-latest
     steps:
@@ -203,13 +263,11 @@ jobs:
 
       - name: Run Clippy
         run: cd src/main && cargo clippy --all-targets --all-features -- -D warnings
-        continue-on-error: true
 
-      - name: Run Rust tests
+      - name: Run tests
         run: cd src/main && cargo test --lib
-        continue-on-error: true
 
-  # ── Frontend unit tests ──────────────────────────────────────────────────
+  # -- Frontend tests + lint (blocking) -------------------------------------
   test-frontend:
     runs-on: ubuntu-latest
     steps:
@@ -220,19 +278,25 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint check
+        run: npx eslint src/renderer --ext .ts,.tsx --max-warnings=0
+
+      - name: Prettier check
+        run: npx prettier --check "src/renderer/**/*.{ts,tsx,css}"
 
       - name: TypeScript check
         run: npx tsc --noEmit
 
-      - name: Lint check
-        run: npm run lint
-        continue-on-error: true
+      - name: Run tests
+        run: npx vitest run --coverage
 
-  # ── End-to-end pipeline test ─────────────────────────────────────────────
+  # -- End-to-end pipeline test ---------------------------------------------
   test-e2e:
     runs-on: ubuntu-latest
-    needs: [test-backend, test-rust, test-frontend]
+    needs: [test-python, test-rust, test-frontend]
     steps:
       - uses: actions/checkout@v4
 
@@ -259,12 +323,12 @@ jobs:
           BACKEND_PID=$!
           sleep 3
           cd ..
-          pytest agent-backend/tests/e2e/test_full_pipeline.py -v || true
-          kill $BACKEND_PID || true
+          pytest agent-backend/tests/e2e/test_full_pipeline.py -v
+          kill $BACKEND_PID 2>/dev/null
 
-  # ── Create GitHub Release on tag push ─────────────────────────────────────
+  # -- Create GitHub Release on tag push ------------------------------------
   create-release:
-    needs: [build-windows, build-macos, build-linux, test-backend, test-rust, test-frontend, test-e2e]
+    needs: [build-windows, build-macos, build-linux, test-python, test-rust, test-frontend, test-e2e]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
