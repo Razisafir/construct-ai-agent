@@ -23,19 +23,49 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - run: npm ci
+      - name: Install npm dependencies
+        run: npm ci
 
-      - name: Update Cargo.lock
-        run: cd src/main && cargo update
+      - name: Build frontend (vite)
+        run: npm run build
 
-      - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
+      - name: Check frontend output
+        run: |
+          dir dist
+          dir dist\index.html
+
+      - name: Build Rust (cargo)
+        run: cd src/main && cargo build --release --verbose
+
+      - name: Bundle with Tauri CLI
+        run: cd src/main && npx tauri build --verbose --no-bundle
+        env:
+          NODE_ENV: production
+
+      - name: Bundle MSI installer
+        run: cd src/main && npx tauri bundle --bundles msi
+        env:
+          NODE_ENV: production
+
+      - name: Check bundle output
+        run: |
+          dir src\main\target\release\bundle\msi\
+
+      - name: Upload .msi artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: construct-windows-installer
+          path: src/main/target/release/bundle/msi/*.msi
+
+      - name: Create draft release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          prerelease: true
+          files: src/main/target/release/bundle/msi/*.msi
+          body: |
+            Construct MVP Build — Windows .msi installer
+            This is a minimal build to verify the pipeline works.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          projectPath: './src/main'
-          tagName: ${{ github.ref_name }}
-          releaseName: 'Construct ${{ github.ref_name }}'
-          releaseBody: 'Minimum Viable Build — Windows .msi installer'
-          releaseDraft: true
-          prerelease: true
