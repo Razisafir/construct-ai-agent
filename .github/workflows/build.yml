@@ -40,14 +40,15 @@ jobs:
 
       # Create a placeholder sidecar binary so tauri-build doesn't fail.
       # The real Python sidecar is built in the Release workflow.
+      # tauri-build only checks that the FILE EXISTS at compile time — it
+      # does not execute it.  A zero-byte file is sufficient.
       - name: Create placeholder sidecar binary
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path src\main\bin
           $placeholder = "src\main\bin\agent-backend-x86_64-pc-windows-msvc.exe"
-          # Minimal PE: a tiny .NET console app that exits immediately
-          Add-Type -OutputAssembly $placeholder -OutputType ConsoleApplication -TypeDefinition 'class P{static void Main(){System.Environment.Exit(0)}}'
-          Write-Host "Created placeholder sidecar: $placeholder ($(Get-Item $placeholder).Length bytes)"
+          New-Item -ItemType File -Force -Path $placeholder
+          Write-Host "Created placeholder sidecar: $placeholder"
 
       - name: Build Rust (cargo)
         run: cd src/main && cargo build --release --verbose
