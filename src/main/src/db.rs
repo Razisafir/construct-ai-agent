@@ -452,7 +452,7 @@ pub fn vacuum_db(db: &Connection) -> Result<usize> {
     db.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);")?;
 
     // Incremental vacuum frees pages on the freelist.
-    db.execute("PRAGMA incremental_vacuum;")?;
+    db.execute("PRAGMA incremental_vacuum;", [])?;
 
     // Full VACUUM rebuilds the database file (expensive — best done
     // during idle time or on app exit).

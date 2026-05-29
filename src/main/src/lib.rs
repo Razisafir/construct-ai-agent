@@ -18,7 +18,8 @@ pub fn run() {
         .plugin(tauri_plugin_log::Builder::new().build())
         .setup(|app| {
             // ── 1. Spawn Python backend sidecar ─────────────────────────────
-            let port = match spawn_backend(app) {
+            let app_handle = app.handle().clone();
+            let port = match spawn_backend(&app_handle) {
                 Ok(p) => {
                     log::info!("Backend sidecar spawned on port {}", p);
                     p

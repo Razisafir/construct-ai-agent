@@ -5,6 +5,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
+use tauri::Manager;
 use crate::commands::agent::AgentSession;
 
 /// Manages loading and saving agent sessions to a JSON file on disk.
