@@ -1,8 +1,9 @@
-name: MVP Build
+name: Build & Test
 
 on:
   push:
     tags: ['v*']
+  pull_request:
   workflow_dispatch:
 
 env:
@@ -10,8 +11,111 @@ env:
   NODE_VERSION: '20'
 
 jobs:
-  # -- Windows -------------------------------------------------------------
+  # =====================================================================
+  # TEST JOBS — run on every PR and tag push (parallel, fail-fast: false)
+  # =====================================================================
+
+  # -- Python Unit Tests -------------------------------------------------
+  test-python-unit:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: |
+            agent-backend/requirements.txt
+            agent-backend/requirements-test.txt
+
+      - name: Install Python dependencies
+        working-directory: agent-backend
+        run: python -m pip install -r requirements.txt -r requirements-test.txt
+
+      - name: Run Python unit tests
+        working-directory: agent-backend
+        run: python -m pytest tests/unit/ -v
+
+  # -- Rust Tests --------------------------------------------------------
+  test-rust:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src/main/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('src/main/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            pkg-config
+
+      - name: Create placeholder sidecar binary
+        run: |
+          mkdir -p src/main/bin
+          touch src/main/bin/agent-backend-x86_64-unknown-linux-gnu
+
+      - name: Cargo check
+        working-directory: src/main
+        run: cargo check
+
+      - name: Run Rust tests
+        working-directory: src/main
+        run: cargo test
+
+      - name: Run Clippy lints
+        working-directory: src/main
+        run: cargo clippy -- -D warnings
+
+  # -- Frontend Tests ----------------------------------------------------
+  test-frontend:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Run TypeScript type check
+        run: npm run lint
+
+      - name: Run Vitest tests
+        run: npm run test -- --run
+
+      - name: Build frontend (vite)
+        run: npm run build
+
+  # =====================================================================
+  # BUILD JOBS — gated on all tests passing
+  # =====================================================================
+
+  # -- Windows -----------------------------------------------------------
   build-windows:
+    needs: [test-python-unit, test-rust, test-frontend]
     runs-on: windows-latest
     permissions:
       contents: write
@@ -64,6 +168,7 @@ jobs:
 
   # -- macOS ---------------------------------------------------------------
   build-macos:
+    needs: [test-python-unit, test-rust, test-frontend]
     runs-on: macos-latest
     permissions:
       contents: write
@@ -121,6 +226,7 @@ jobs:
 
   # -- Linux ---------------------------------------------------------------
   build-linux:
+    needs: [test-python-unit, test-rust, test-frontend]
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -180,7 +286,7 @@ jobs:
 
   # -- Draft Release -------------------------------------------------------
   draft-release:
-    needs: [build-windows, build-macos, build-linux]
+    needs: [test-python-unit, test-rust, test-frontend, build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
