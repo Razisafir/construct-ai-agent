@@ -38,4 +38,4 @@ schedule==1.2.2
 markitdown[all]==0.1.1
 
 # Browser automation
-playwright==1.49.1
+playwright==1.60.0
