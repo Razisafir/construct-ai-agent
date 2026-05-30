@@ -1,37 +1,41 @@
 ---
-name: Feature request
-about: Suggest an idea for Construct
-title: '[FEATURE] '
-labels: enhancement
-type: Feature
-assignees: ''
-
+name: Feature Request
+about: Propose a new capability for the product
+title: "[FEATURE] "
+labels: ["feature", "triage"]
+assignees: Razisafir
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## Overview
+<!-- One-sentence description of the proposed capability -->
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+## Business Impact
+<!-- How does this unlock revenue, user growth, or competitive advantage? -->
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+## Acceptance Criteria
+- [ ] 
+- [ ] 
+- [ ] 
 
-**Use case**
-Describe the specific use case or workflow this feature would enable.
+## Effort Estimate
+<!-- Small (1-2 days) / Medium (3-5 days) / Large (1-2 weeks) -->
 
-**Affected areas**
-Check the areas this feature would affect:
+## Dependencies
+- Blocked by: 
+- Blocks: 
+
+## Priority Justification
+<!-- Why now? What happens if this is delayed? -->
+
+## Affected Areas
 - [ ] Frontend UI
 - [ ] Agent behavior
 - [ ] Memory system
 - [ ] Tool system
 - [ ] LLM integration
-- [ ] Autonomous mode
 - [ ] Security/Permissions
 - [ ] Performance
 - [ ] Documentation
-- [ ] Other: ___
 
-**Additional context**
-Add any other context, mockups, or examples about the feature request here.
+## Additional Context
+<!-- Designs, references, competitive research -->
