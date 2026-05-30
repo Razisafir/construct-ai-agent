@@ -1,44 +1,35 @@
 ---
-name: Bug report
-about: Create a report to help us improve Construct
-title: '[BUG] '
-labels: bug
-type: Bug
-assignees: ''
-
+name: Bug Report
+about: Report a critical issue affecting users
+title: "[BUG] "
+labels: ["bug", "triage"]
+assignees: Razisafir
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+## Overview
+<!-- One-sentence description of the issue -->
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Type '....'
-4. See error
+## Business Impact
+<!-- How does this affect revenue, user experience, or competitive position? -->
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+## Reproduction Steps
+1. 
+2. 
+3. 
 
-**Screenshots / Logs**
-If applicable, add screenshots or paste log output to help explain the problem.
+## Expected vs Actual
+| Expected | Actual |
+|----------|--------|
+| | |
 
-```
-Paste relevant logs here (from the Terminal panel or backend console)
-```
-
-**Environment:**
+## Environment
 - **OS:** [e.g. macOS 14.5, Windows 11, Ubuntu 24.04]
-- **Construct Version:** [e.g. 0.1.0]
-- **Installation Method:** [e.g. Built from source, Downloaded release]
-- **LLM Provider:** [e.g. OpenAI, Anthropic, Ollama]
-- **Node.js Version:** [e.g. 20.11.0]
-- **Rust Version:** [e.g. 1.78.0]
-- **Python Version:** [e.g. 3.12.0]
+- **App Version:** [e.g. 0.1.0]
+- **LLM Provider:** [e.g. Ollama, OpenAI, Anthropic]
+- **Agent Mode:** [e.g. Code, Architect, Autonomous]
 
-**Additional context**
-Add any other context about the problem here, such as:
-- Does it happen consistently or intermittently?
-- Were you using autonomous mode?
-- Were any specific tools being executed?
+## Logs / Screenshots
+<!-- Paste relevant logs or attach screenshots -->
+
+## Additional Context
+<!-- Does this happen consistently or intermittently? Any specific tools being executed? -->
