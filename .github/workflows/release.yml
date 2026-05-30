@@ -59,6 +59,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: './src/main'
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Construct ${{ github.ref_name }}'
+          releaseBody: |
+            Construct AI Agent desktop app release.
+            See the assets below for downloadable installers.
+          releaseDraft: true
+          prerelease: true
           args: ''
 
   # -- macOS (Apple Silicon / arm64 only) --------------------------------
@@ -107,6 +114,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: './src/main'
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Construct ${{ github.ref_name }}'
+          releaseBody: |
+            Construct AI Agent desktop app release.
+            See the assets below for downloadable installers.
+          releaseDraft: true
+          prerelease: true
           args: '--target aarch64-apple-darwin'
 
   # -- Linux -------------------------------------------------------------
@@ -164,4 +178,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: './src/main'
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Construct ${{ github.ref_name }}'
+          releaseBody: |
+            Construct AI Agent desktop app release.
+            See the assets below for downloadable installers.
+          releaseDraft: true
+          prerelease: true
           args: ''
