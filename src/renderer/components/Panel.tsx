@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import {
   Terminal,
   MessageSquare,
@@ -9,9 +9,13 @@ import {
   Monitor,
   Users,
   Zap,
+  GitPullRequest,
   X,
   ChevronUp,
 } from "lucide-react";
+import useAppStore from "../stores/useAppStore";
+import { useDiffStore } from "../stores/useDiffStore";
+import DiffPanel from "./DiffPanel";
 
 const COLORS = {
   base: "#0c0c10",
@@ -26,28 +30,46 @@ const COLORS = {
   border: "rgba(255,255,255,0.04)",
   success: "#22c55e",
   error: "#ef4444",
+  warning: "#f59e0b",
 };
 
 interface Tab {
   id: string;
   icon: React.ReactNode;
   label: string;
+  badge?: number;
 }
 
-const tabs: Tab[] = [
-  { id: "terminal", icon: <Terminal size={13} />, label: "Terminal" },
-  { id: "chat", icon: <MessageSquare size={13} />, label: "Chat" },
-  { id: "agent", icon: <Bot size={13} />, label: "Agent" },
-  { id: "memory", icon: <Brain size={13} />, label: "Memory" },
-  { id: "skills", icon: <Wrench size={13} />, label: "Skills" },
-  { id: "mcp", icon: <Plug size={13} />, label: "MCP" },
-  { id: "screen", icon: <Monitor size={13} />, label: "Screen" },
-  { id: "agents", icon: <Users size={13} />, label: "Agents" },
-  { id: "auto", icon: <Zap size={13} />, label: "Auto" },
-];
-
 function Panel() {
-  const [activeTab, setActiveTab] = useState("terminal");
+  const panelTab = useAppStore((s) => s.panelTab);
+  const setPanelTab = useAppStore((s) => s.setPanelTab);
+  const togglePanel = useAppStore((s) => s.togglePanel);
+  const pendingDiffCount = useDiffStore((s) => s.getPendingCount());
+
+  // Listen for construct:panel-tab events from command palette / keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.tab) {
+        setPanelTab(detail.tab);
+      }
+    };
+    window.addEventListener("construct:panel-tab", handler);
+    return () => window.removeEventListener("construct:panel-tab", handler);
+  }, [setPanelTab]);
+
+  const tabs: Tab[] = [
+    { id: "terminal", icon: <Terminal size={13} />, label: "Terminal" },
+    { id: "chat", icon: <MessageSquare size={13} />, label: "Chat" },
+    { id: "agent", icon: <Bot size={13} />, label: "Agent" },
+    { id: "memory", icon: <Brain size={13} />, label: "Memory" },
+    { id: "changes", icon: <GitPullRequest size={13} />, label: "Changes", badge: pendingDiffCount || undefined },
+    { id: "skills", icon: <Wrench size={13} />, label: "Skills" },
+    { id: "mcp", icon: <Plug size={13} />, label: "MCP" },
+    { id: "screen", icon: <Monitor size={13} />, label: "Screen" },
+    { id: "agents", icon: <Users size={13} />, label: "Agents" },
+    { id: "auto", icon: <Zap size={13} />, label: "Auto" },
+  ];
 
   const renderTerminal = () => (
     <div
@@ -156,7 +178,7 @@ function Panel() {
   );
 
   const renderContent = () => {
-    switch (activeTab) {
+    switch (panelTab) {
       case "terminal":
         return renderTerminal();
       case "chat":
@@ -165,6 +187,8 @@ function Panel() {
         return renderAgent();
       case "memory":
         return renderMemory();
+      case "changes":
+        return <DiffPanel />;
       case "skills":
         return renderPlaceholder("Skills");
       case "mcp":
@@ -195,11 +219,11 @@ function Panel() {
       >
         <div className="flex overflow-hidden flex-1">
           {tabs.map((tab) => {
-            const isActive = activeTab === tab.id;
+            const isActive = panelTab === tab.id;
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => setPanelTab(tab.id)}
                 className="flex items-center h-full px-[10px] gap-[5px] border-0 cursor-pointer shrink-0 whitespace-nowrap font-['Geist_Mono','JetBrains_Mono',monospace] text-[10px] uppercase tracking-[0.08em] font-semibold transition-colors duration-[50ms]"
                 style={{
                   borderRight: `1px solid ${COLORS.border}`,
@@ -208,24 +232,47 @@ function Panel() {
                     : `2px solid transparent`,
                   backgroundColor: isActive ? COLORS.surface2 : "transparent",
                   color: isActive ? COLORS.textPrimary : COLORS.muted,
+                  position: "relative",
                 }}
               >
                 {tab.icon}
                 <span>{tab.label}</span>
+                {tab.badge && tab.badge > 0 && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: 2,
+                      right: 4,
+                      fontSize: 7,
+                      fontWeight: 700,
+                      lineHeight: 1,
+                      padding: "1px 3px",
+                      borderRadius: 9999,
+                      backgroundColor: COLORS.warning,
+                      color: COLORS.base,
+                    }}
+                  >
+                    {tab.badge > 9 ? "9+" : tab.badge}
+                  </span>
+                )}
               </button>
             );
           })}
         </div>
         <div className="flex items-center pr-1 shrink-0">
           <button
+            onClick={togglePanel}
             className="flex items-center justify-center w-[22px] h-[22px] rounded-[2px] border-0 cursor-pointer bg-transparent"
             style={{ color: COLORS.muted }}
+            title="Close panel"
           >
             <ChevronUp size={12} />
           </button>
           <button
+            onClick={togglePanel}
             className="flex items-center justify-center w-[22px] h-[22px] rounded-[2px] border-0 cursor-pointer bg-transparent"
             style={{ color: COLORS.muted }}
+            title="Close"
           >
             <X size={12} />
           </button>

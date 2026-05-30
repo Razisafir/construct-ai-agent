@@ -306,12 +306,12 @@ function AppRoot() {
     toggleAgentPanel: () => {
       const store = useAppStore.getState();
       if (!store.panelVisible) store.togglePanel();
-      window.dispatchEvent(new CustomEvent("construct:panel-tab", { detail: { tab: "agent" } }));
+      store.setPanelTab("agent");
     },
     toggleMemoryPanel: () => {
       const store = useAppStore.getState();
       if (!store.panelVisible) store.togglePanel();
-      window.dispatchEvent(new CustomEvent("construct:panel-tab", { detail: { tab: "memory" } }));
+      store.setPanelTab("memory");
     },
     toggleTerminal: () => {
       togglePanel();

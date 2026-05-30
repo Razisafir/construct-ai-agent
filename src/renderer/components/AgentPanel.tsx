@@ -6,6 +6,9 @@ import type { LogEntry } from "./TerminalOutput";
 import AgentModeSelector from "./AgentModeSelector";
 import InlineDiff, { type PendingChange } from "./InlineDiff";
 import useAppStore from "../stores/useAppStore";
+import { useDiffStore } from "../stores/useDiffStore";
+import { generateDiff } from "../utils/diffParser";
+import type { FileDiff } from "../types/diff";
 
 /* ─────────────────────── types ─────────────────────── */
 
@@ -280,6 +283,59 @@ function AgentPanel() {
             logs: newLogs,
           };
         });
+
+        // Capture file changes for diff viewer
+        // The backend sends tool_call events with JSON content containing file info
+        if (type === "tool_call" || type === "file_change") {
+          try {
+            const data = JSON.parse(content);
+            const toolName = data.tool || data.tool_name;
+            if (toolName === "write_file" || toolName === "edit_file" || toolName === "create_file") {
+              const filePath = data.arguments?.path || data.arguments?.file_path || data.path || "";
+              const newContent = data.arguments?.content || data.content || "";
+
+              if (filePath && newContent) {
+                const diffStore = useDiffStore.getState();
+                const activeId = diffStore.activeSessionId;
+
+                if (activeId) {
+                  // Try to read old content for comparison
+                  invoke<string>("read_file", { filePath })
+                    .then((oldContent) => {
+                      const fileDiff = generateDiff(oldContent, newContent, filePath);
+                      diffStore.addFileDiff(activeId, fileDiff);
+                    })
+                    .catch(() => {
+                      // File doesn't exist yet — it's a new file
+                      const newLines = newContent.split("\n");
+                      const fileDiff: FileDiff = {
+                        filePath,
+                        status: "added",
+                        hunks: [
+                          {
+                            id: `hunk-0`,
+                            oldStart: 0,
+                            oldLines: 0,
+                            newStart: 1,
+                            newLines: newLines.length,
+                            oldContent: [],
+                            newContent: newLines,
+                            header: `@@ -0,0 +1,${newLines.length} @@`,
+                            accepted: null,
+                          },
+                        ],
+                        oldContent: "",
+                        newContent,
+                      };
+                      diffStore.addFileDiff(activeId, fileDiff);
+                    });
+                }
+              }
+            }
+          } catch {
+            // Content wasn't JSON — not a tool_call event, ignore
+          }
+        }
       });
 
       if (!cancelled) {
@@ -312,6 +368,8 @@ function AgentPanel() {
         mode: agentMode,
       });
       setSessionId(sid);
+      // Create a diff session to track file changes from this agent run
+      useDiffStore.getState().createSession(sid, []);
     } catch (err) {
       setState((prev) => ({
         ...prev,

@@ -29,6 +29,9 @@ import {
   PanelLeft,
   PanelBottom,
   Maximize,
+  GitPullRequest,
+  Check,
+  X,
 } from "lucide-react";
 import { registry, type Command } from "../commands/registry";
 
@@ -80,6 +83,9 @@ const iconMap: Record<string, React.ReactNode> = {
   "panel-left": <PanelLeft size={13} />,
   "panel-bottom": <PanelBottom size={13} />,
   maximize: <Maximize size={13} />,
+  "git-pull-request": <GitPullRequest size={13} />,
+  check: <Check size={13} />,
+  x: <X size={13} />,
 };
 
 /* ─────────────────────── category styling ─────────────────────── */

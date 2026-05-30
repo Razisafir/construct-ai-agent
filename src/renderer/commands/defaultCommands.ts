@@ -1,5 +1,6 @@
 import { registry } from "./registry";
 import useAppStore from "../stores/useAppStore";
+import { useDiffStore } from "../stores/useDiffStore";
 import type { AgentMode } from "../components/AgentModeSelector";
 
 /**
@@ -145,7 +146,7 @@ export function registerDefaultCommands() {
     action: () => {
       const store = useAppStore.getState();
       if (!store.panelVisible) store.togglePanel();
-      window.dispatchEvent(new CustomEvent("construct:panel-tab", { detail: { tab: "agent" } }));
+      store.setPanelTab("agent");
     },
   });
 
@@ -160,7 +161,7 @@ export function registerDefaultCommands() {
     action: () => {
       const store = useAppStore.getState();
       if (!store.panelVisible) store.togglePanel();
-      window.dispatchEvent(new CustomEvent("construct:panel-tab", { detail: { tab: "memory" } }));
+      store.setPanelTab("memory");
     },
   });
 
@@ -175,7 +176,7 @@ export function registerDefaultCommands() {
     action: () => {
       const store = useAppStore.getState();
       if (!store.panelVisible) store.togglePanel();
-      window.dispatchEvent(new CustomEvent("construct:panel-tab", { detail: { tab: "terminal" } }));
+      store.setPanelTab("terminal");
     },
   });
 
@@ -205,7 +206,25 @@ export function registerDefaultCommands() {
     action: () => {
       const store = useAppStore.getState();
       if (!store.panelVisible) store.togglePanel();
-      window.dispatchEvent(new CustomEvent("construct:panel-tab", { detail: { tab: "skills" } }));
+      store.setPanelTab("skills");
+    },
+  });
+
+  registry.register({
+    id: "nav.changes",
+    title: "Open Changes Panel",
+    description: "View and review agent code changes with accept/reject",
+    icon: "git-pull-request",
+    shortcut: "Ctrl+Shift+D",
+    category: "navigation",
+    keywords: ["diff", "changes", "panel", "review", "git", "code", "accept", "reject"],
+    action: () => {
+      const store = useAppStore.getState();
+      if (!store.panelVisible) store.togglePanel();
+      store.setPanelTab("changes");
+    },
+    enabled: () => {
+      return useDiffStore.getState().getPendingCount() > 0 || !!useDiffStore.getState().activeSessionId;
     },
   });
 
@@ -219,6 +238,57 @@ export function registerDefaultCommands() {
     keywords: ["settings", "config", "preferences", "options"],
     action: () => {
       window.dispatchEvent(new CustomEvent("construct:open-settings"));
+    },
+  });
+
+  // ── Diff Commands ────────────────────────────────────────────
+  registry.register({
+    id: "diff.accept-all",
+    title: "Accept All Changes",
+    description: "Accept all pending diff hunks from the agent",
+    icon: "check",
+    category: "tools",
+    keywords: ["accept", "diff", "changes", "all", "approve", "code"],
+    action: () => {
+      const sessionId = useDiffStore.getState().activeSessionId;
+      if (sessionId) {
+        useDiffStore.getState().acceptAll(sessionId);
+        useAppStore.getState().addToast({
+          type: "success",
+          title: "All changes accepted",
+          message: "All pending hunks have been accepted",
+        });
+      }
+    },
+    enabled: () => {
+      const sessionId = useDiffStore.getState().activeSessionId;
+      if (!sessionId) return false;
+      return useDiffStore.getState().getPendingHunks(sessionId).length > 0;
+    },
+  });
+
+  registry.register({
+    id: "diff.reject-all",
+    title: "Reject All Changes",
+    description: "Reject all pending diff hunks from the agent",
+    icon: "x",
+    category: "tools",
+    keywords: ["reject", "diff", "changes", "all", "discard", "code"],
+    action: () => {
+      const sessionId = useDiffStore.getState().activeSessionId;
+      if (sessionId) {
+        useDiffStore.getState().rejectAll(sessionId);
+        useAppStore.getState().addToast({
+          type: "info",
+          title: "All changes rejected",
+          message: "All pending hunks have been rejected",
+        });
+      }
+    },
+    enabled: () => {
+      const sessionId = useDiffStore.getState().activeSessionId;
+      if (!sessionId) return false;
+      return useDiffStore.getState().getPendingHunks(sessionId).length > 0;
     },
   });
 

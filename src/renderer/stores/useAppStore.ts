@@ -34,6 +34,10 @@ interface AppState {
   toggleSidebar: () => void;
   togglePanel: () => void;
 
+  // Panel tab (shared state for command palette + keyboard shortcuts)
+  panelTab: string;
+  setPanelTab: (tab: string) => void;
+
   // Sidebar
   activeSidebarTab: string;
   setActiveSidebarTab: (tab: string) => void;
@@ -153,6 +157,10 @@ const useAppStore = create<AppState>((set) => ({
     set((state) => ({ sidebarVisible: !state.sidebarVisible })),
   togglePanel: () =>
     set((state) => ({ panelVisible: !state.panelVisible })),
+
+  // Panel tab
+  panelTab: "terminal" as const,
+  setPanelTab: (tab) => set({ panelTab: tab }),
 
   // Sidebar
   activeSidebarTab: "files",
