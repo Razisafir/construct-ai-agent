@@ -47,6 +47,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Build frontend
+        run: npm run build
+
       - name: Install Tauri CLI v2
         run: npm install @tauri-apps/cli@^2
 
@@ -118,6 +121,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Build frontend
+        run: npm run build
+
       - name: Install Tauri CLI v2
         run: npm install @tauri-apps/cli@^2
 
@@ -172,6 +178,9 @@ jobs:
           ls -la ../src/main/bin/
 
       - run: npm ci
+
+      - name: Build frontend
+        run: npm run build
 
       - name: Install Tauri CLI v2
         run: npm install @tauri-apps/cli@^2
