@@ -156,10 +156,15 @@ _notification_service: Optional[Any] = None
 async def lifespan(app: FastAPI):
     logger.info("Construct Agent API starting up …")
 
-    # Warm up embedding model
+    # Warm up embedding model (gracefully skip if offline)
     from memory import get_embedding_model
-    get_embedding_model()
-    logger.info("Embedding model warmed up.")
+    model = get_embedding_model()
+    if model is not None:
+        logger.info("Embedding model warmed up.")
+    else:
+        logger.info("Embedding model unavailable — running in offline mode. "
+                    "Semantic search will use keyword fallback. "
+                    "Set CONSTRUCT_OFFLINE=1 to suppress this message.")
 
     # Initialise agent services
     global _llm_service, _tool_registry, _agent_executor, _session_store

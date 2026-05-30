@@ -23,7 +23,21 @@ from core.cache import LRUCache
 import chromadb
 from chromadb.config import Settings
 from chromadb.api import ClientAPI
-from sentence_transformers import SentenceTransformer
+
+# Lazy import of SentenceTransformer to avoid crash when offline
+SentenceTransformer = None  # type: ignore
+
+
+def _import_sentence_transformers():
+    """Lazy import SentenceTransformer — only called when needed."""
+    global SentenceTransformer
+    if SentenceTransformer is None:
+        try:
+            from sentence_transformers import SentenceTransformer as ST
+            SentenceTransformer = ST  # type: ignore
+        except Exception:
+            pass
+    return SentenceTransformer is not None
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -40,11 +54,82 @@ CONVERSATION_COLLECTION: str = "conversation_embeddings"
 CODE_COLLECTION: str = "code_embeddings"
 
 # ---------------------------------------------------------------------------
+# Offline mode configuration
+# ---------------------------------------------------------------------------
+# CONSTRUCT_OFFLINE=1 disables embedding model loading and falls back to
+# keyword search. This is critical for CI and air-gapped environments.
+_OFFLINE_MODE: bool = os.environ.get("CONSTRUCT_OFFLINE", "").lower() in ("1", "true", "yes")
+
+# ---------------------------------------------------------------------------
 # Singletons (lazy-loaded)
 # ---------------------------------------------------------------------------
 _chroma_client: Optional[ClientAPI] = None
-_embedding_model: Optional[SentenceTransformer] = None
+_embedding_model: Optional[Any] = None  # SentenceTransformer or None
+_embedding_model_failed: bool = False  # True if loading failed
 _query_cache: LRUCache = LRUCache(max_size=200, default_ttl=300)  # 5-min TTL
+
+
+# ---------------------------------------------------------------------------
+# Keyword search fallback (for offline mode)
+# ---------------------------------------------------------------------------
+
+def _keyword_search(query_text: str, n_results: int = 5) -> List[SearchResult]:
+    """
+    Fallback keyword search when embeddings are unavailable.
+    Searches document text in ChromaDB using basic string matching.
+    """
+    results: List[SearchResult] = []
+    query_lower = query_text.lower()
+    query_terms = [t for t in query_lower.split() if len(t) > 2]
+
+    if not query_terms:
+        return results
+
+    try:
+        client = get_chroma_client()
+        for collection_name in (CONVERSATION_COLLECTION, CODE_COLLECTION):
+            try:
+                collection = client.get_collection(name=collection_name)
+            except Exception:
+                continue
+
+            # Get all documents (limited to 500 for performance)
+            try:
+                all_docs = collection.get(limit=500, include=["documents", "metadatas"])
+            except Exception:
+                continue
+
+            ids = all_docs.get("ids", [])
+            documents = all_docs.get("documents", [])
+            metadatas = all_docs.get("metadatas", [])
+
+            for i, doc_text in enumerate(documents):
+                if not doc_text:
+                    continue
+                doc_lower = doc_text.lower()
+                # Count matching terms
+                matches = sum(1 for term in query_terms if term in doc_lower)
+                if matches > 0:
+                    score = min(0.95, 0.3 + (matches / len(query_terms)) * 0.65)
+                    meta = metadatas[i] if i < len(metadatas) else {}
+                    results.append(
+                        SearchResult(
+                            id=ids[i] if i < len(ids) else str(i),
+                            text=doc_text,
+                            source=meta.get("source", collection_name.replace("_embeddings", "")) if isinstance(meta, dict) else collection_name.replace("_embeddings", ""),
+                            distance=1.0 - score,
+                            metadata=meta if isinstance(meta, dict) else {},
+                            relevance_score=score,
+                        )
+                    )
+
+        # Sort by relevance (highest first) and limit
+        results.sort(key=lambda r: r.relevance_score, reverse=True)
+        return results[:n_results]
+
+    except Exception as exc:
+        logger.warning("Keyword search failed: %s", exc)
+        return []
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -131,20 +216,42 @@ def get_chroma_client() -> ClientAPI:
 # 2. Embedding model (lazy singleton)
 # ---------------------------------------------------------------------------
 
-def get_embedding_model() -> SentenceTransformer:
+def get_embedding_model() -> Optional[Any]:
     """
     Return the shared SentenceTransformer model instance.
 
-    The model is loaded lazily on first call to avoid heavy import-time work.
+    The model is loaded lazily on first call. If offline mode is enabled or
+    the model fails to load, returns None (callers should use keyword fallback).
     """
-    global _embedding_model
+    global _embedding_model, _embedding_model_failed
+
+    # Already loaded
     if _embedding_model is not None:
         return _embedding_model
 
-    logger.info("Loading embedding model: %s", EMBEDDING_MODEL)
-    _embedding_model = SentenceTransformer(EMBEDDING_MODEL)
-    logger.info("Embedding model loaded successfully")
-    return _embedding_model
+    # Already failed — don't retry
+    if _embedding_model_failed or _OFFLINE_MODE:
+        if _OFFLINE_MODE:
+            logger.debug("Embedding model: offline mode (CONSTRUCT_OFFLINE=1)")
+        return None
+
+    # Try lazy import
+    if not _import_sentence_transformers():
+        logger.warning("sentence-transformers not installed — embeddings disabled")
+        _embedding_model_failed = True
+        return None
+
+    try:
+        logger.info("Loading embedding model: %s", EMBEDDING_MODEL)
+        _embedding_model = SentenceTransformer(EMBEDDING_MODEL)
+        logger.info("Embedding model loaded successfully")
+        return _embedding_model
+    except Exception as exc:
+        logger.warning("Failed to load embedding model: %s", exc)
+        logger.warning("Semantic search will fall back to keyword matching. "
+                       "Set CONSTRUCT_OFFLINE=1 to suppress this warning.")
+        _embedding_model_failed = True
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -157,9 +264,16 @@ def _get_or_create_collection(collection_name: str) -> Any:
     return client.get_or_create_collection(name=collection_name)
 
 
-def _embed_text(text: str) -> List[float]:
-    """Generate a dense embedding vector for *text*."""
+def _embed_text(text: str) -> Optional[List[float]]:
+    """
+    Generate a dense embedding vector for *text*.
+
+    Returns None if the embedding model is unavailable (offline mode).
+    Callers should check for None and fall back to keyword search.
+    """
     model = get_embedding_model()
+    if model is None:
+        return None
     embedding = model.encode(text, convert_to_numpy=True)
     return embedding.tolist()
 
@@ -207,12 +321,15 @@ def store_embedding(
 
     embedding = _embed_text(text)
 
-    collection.add(
-        ids=[memory_id],
-        documents=[text],
-        embeddings=[embedding],
-        metadatas=[doc_metadata],
-    )
+    add_kwargs: Dict[str, Any] = {
+        "ids": [memory_id],
+        "documents": [text],
+        "metadatas": [doc_metadata],
+    }
+    if embedding is not None:
+        add_kwargs["embeddings"] = [embedding]
+
+    collection.add(**add_kwargs)
 
     logger.debug("Stored %s embedding: %s", source, memory_id)
     return memory_id
@@ -262,12 +379,15 @@ def store_conversation_message(
 
     embedding = _embed_text(content)
 
-    collection.add(
-        ids=[memory_id],
-        documents=[content],
-        embeddings=[embedding],
-        metadatas=[metadata],
-    )
+    add_kwargs: Dict[str, Any] = {
+        "ids": [memory_id],
+        "documents": [content],
+        "metadatas": [metadata],
+    }
+    if embedding is not None:
+        add_kwargs["embeddings"] = [embedding]
+
+    collection.add(**add_kwargs)
 
     logger.debug("Stored conversation message from '%s': %s", role, memory_id)
     return memory_id
@@ -326,12 +446,15 @@ def store_code_event(
 
     embedding = _embed_text(full_text)
 
-    collection.add(
-        ids=[memory_id],
-        documents=[full_text],
-        embeddings=[embedding],
-        metadatas=[metadata],
-    )
+    add_kwargs: Dict[str, Any] = {
+        "ids": [memory_id],
+        "documents": [full_text],
+        "metadatas": [metadata],
+    }
+    if embedding is not None:
+        add_kwargs["embeddings"] = [embedding]
+
+    collection.add(**add_kwargs)
 
     logger.debug(
         "Stored code event [%s] for '%s': %s", change_type, file_path, memory_id
@@ -442,6 +565,12 @@ def query_similar(
         return cached  # type: ignore[return-value]
 
     query_embedding = _embed_text(query_text)
+
+    # Fallback to keyword search if embeddings unavailable (offline mode)
+    if query_embedding is None:
+        logger.debug("query_similar: embeddings unavailable, using keyword fallback")
+        return _keyword_search(query_text, n_results=n_results)
+
     results: List[SearchResult] = []
 
     if source_filter:
@@ -500,6 +629,11 @@ def query_conversations(query_text: str, n_results: int = 5) -> List[SearchResul
         raise ValueError("Query text cannot be empty")
 
     query_embedding = _embed_text(query_text)
+
+    if query_embedding is None:
+        logger.debug("query_conversations: embeddings unavailable, using keyword fallback")
+        return _keyword_search(query_text, n_results=n_results)
+
     return _query_collection(
         CONVERSATION_COLLECTION, query_embedding, n_results=n_results
     )
@@ -529,6 +663,11 @@ def query_code_events(query_text: str, n_results: int = 5) -> List[SearchResult]
         raise ValueError("Query text cannot be empty")
 
     query_embedding = _embed_text(query_text)
+
+    if query_embedding is None:
+        logger.debug("query_code_events: embeddings unavailable, using keyword fallback")
+        return _keyword_search(query_text, n_results=n_results)
+
     return _query_collection(CODE_COLLECTION, query_embedding, n_results=n_results)
 
 
@@ -651,8 +790,13 @@ def hybrid_search(
         logger.debug("hybrid_search cache hit for '%s...'", query_text[:40])
         return cached  # type: ignore[return-value]
 
-    # 1. Vector results
+    # 1. Vector results (will fall back to keyword if embeddings unavailable)
     vector_results = query_similar(query_text, n_results=n_results * 3)
+
+    # If we got keyword results (no embeddings), just return them
+    if _embed_text(query_text) is None:
+        _query_cache.set(vector_results, query_text, tuple(sorted(frozenset(d.items()) for d in sqlite_results)), n_results)
+        return vector_results[:n_results]
     vector_rank: Dict[str, Tuple[int, SearchResult]] = {
         r.id: (i, r) for i, r in enumerate(vector_results)
     }

@@ -55,8 +55,8 @@ _circuit_breakers = {
     "ollama": CircuitBreaker(name="ollama", failure_threshold=10, recovery_timeout=30),
 }
 
-# Provider fallback order: try OpenAI → Anthropic → Google → Ollama
-_PROVIDER_FALLBACK_ORDER = ["openai", "anthropic", "google", "ollama"]
+# Provider fallback order: try OpenAI → Anthropic → Google → Ollama → Mock
+_PROVIDER_FALLBACK_ORDER = ["openai", "anthropic", "google", "ollama", "mock"]
 
 # ---------------------------------------------------------------------------
 # Provider / model configuration
@@ -70,6 +70,7 @@ class LLMProvider(Enum):
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
     OLLAMA = "ollama"
+    MOCK = "mock"
 
 
 @dataclass
@@ -326,6 +327,16 @@ class LLMService:
         )
         logger.info("Ollama configured: host=%s, model=%s", ollama_host, ollama_model)
 
+        # Mock (for CI testing — activated by CONSTRUCT_MOCK_LLM=1)
+        if os.environ.get("CONSTRUCT_MOCK_LLM", "").lower() in ("1", "true", "yes"):
+            self.configs[LLMProvider.MOCK] = LLMConfig(
+                provider=LLMProvider.MOCK,
+                model="mock",
+                temperature=0.0,
+                max_tokens=4096,
+            )
+            logger.info("Mock LLM configured for CI testing")
+
     # -- Circuit breaker helpers --------------------------------------------
 
     def _get_provider_call_fn(self, provider: str):
@@ -346,6 +357,7 @@ class LLMService:
             "anthropic": self._anthropic_complete,
             "google": self._google_complete,
             "ollama": self._ollama_complete,
+            "mock": self._mock_complete,
         }
         return fn_map.get(provider)
 
@@ -367,6 +379,7 @@ class LLMService:
             "anthropic": self._anthropic_stream,
             "google": self._google_stream,
             "ollama": self._ollama_stream,
+            "mock": self._mock_stream,
         }
         return fn_map.get(provider)
 
@@ -632,6 +645,8 @@ class LLMService:
                 return LLMProvider.ANTHROPIC
             if "gemini" in model.lower() and LLMProvider.GOOGLE in self.configs:
                 return LLMProvider.GOOGLE
+            if "mock" in model.lower() and LLMProvider.MOCK in self.configs:
+                return LLMProvider.MOCK
             return LLMProvider.OLLAMA
 
     # -- Token buffering ----------------------------------------------------
@@ -1381,6 +1396,45 @@ class LLMService:
                 duration_ms=duration_ms,
             )
         )
+
+    # -- Mock provider (deterministic, for CI testing) ----------------------
+
+    async def _mock_complete(
+        self,
+        messages: List[Message],
+        tool_schemas: Optional[List[Dict[str, Any]]] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> str:
+        """Deterministic mock completion for CI testing."""
+        from core.mock_llm import MockLLMProvider
+
+        mock = MockLLMProvider()
+        result = await mock.complete(messages)
+        self._log_call(
+            LLMCallLog(
+                provider="mock",
+                model="mock",
+                duration_ms=1,
+                prompt_tokens=0,
+                completion_tokens=0,
+            )
+        )
+        return result
+
+    async def _mock_stream(
+        self,
+        messages: List[Message],
+        tool_schemas: Optional[List[Dict[str, Any]]] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> AsyncIterator[str]:
+        """Deterministic mock streaming for CI testing."""
+        from core.mock_llm import MockLLMProvider
+
+        mock = MockLLMProvider()
+        async for chunk in mock.stream_complete(messages):
+            yield chunk
 
     # -- Logging ------------------------------------------------------------
 
