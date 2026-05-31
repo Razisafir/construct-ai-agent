@@ -118,6 +118,7 @@ from memory import (
     query_conversations,
     query_code_events,
     get_collection_stats,
+    get_recent_memories,
     delete_memory,
     hybrid_search,
     SearchResult,
@@ -763,6 +764,32 @@ async def api_stats() -> dict:
         return get_collection_stats()
     except Exception as exc:
         logger.error("Stats query failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/memory/recent", response_model=List[SearchResultItem])
+async def api_recent_memories(limit: int = 20) -> List[dict]:
+    """Retrieve the most recent memories across all collections.
+
+    This endpoint is used by the MemoryPanel to browse recent memories
+    without requiring a search query.  Results are sorted by timestamp
+    (newest first).
+    """
+    try:
+        results = get_recent_memories(n_results=limit)
+        return [
+            {
+                "id": r.id,
+                "text": r.text,
+                "source": r.source,
+                "distance": r.distance,
+                "metadata": r.metadata,
+                "relevance_score": r.relevance_score,
+            }
+            for r in results
+        ]
+    except Exception as exc:
+        logger.error("Recent memories query failed: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
 
 

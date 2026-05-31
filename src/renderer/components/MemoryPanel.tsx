@@ -68,6 +68,7 @@ interface ApiMemoryResult {
   id: string;
   text: string;
   source: string;
+  distance: number;
   relevance_score: number;
   metadata?: Record<string, unknown>;
 }
@@ -347,10 +348,12 @@ function MemoryPanel() {
   const loadRecent = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/memory/query?limit=20`);
+      const res = await fetch(`${API_BASE}/memory/recent?limit=20`);
       if (res.ok) {
         const data = await res.json();
-        const entries: MemoryEntry[] = (data.results ?? []).map(mapApiResult);
+        // API returns a flat array of SearchResultItem
+        const items: ApiMemoryResult[] = Array.isArray(data) ? data : (data.results ?? []);
+        const entries: MemoryEntry[] = items.map(mapApiResult);
         setState((prev) => ({ ...prev, entries }));
       } else {
         setState((prev) => ({ ...prev, entries: [] }));
@@ -376,12 +379,19 @@ function MemoryPanel() {
     }
     setLoading(true);
     try {
-      const res = await fetch(
-        `${API_BASE}/memory/query?q=${encodeURIComponent(state.query)}&limit=20`
-      );
+      const res = await fetch(`${API_BASE}/memory/query`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: state.query,
+          n_results: 20,
+        }),
+      });
       if (res.ok) {
         const data = await res.json();
-        const entries: MemoryEntry[] = (data.results ?? []).map(mapApiResult);
+        // API returns a flat array of SearchResultItem
+        const items: ApiMemoryResult[] = Array.isArray(data) ? data : (data.results ?? []);
+        const entries: MemoryEntry[] = items.map(mapApiResult);
         setState((prev) => ({ ...prev, entries }));
       } else {
         setState((prev) => ({ ...prev, entries: [] }));

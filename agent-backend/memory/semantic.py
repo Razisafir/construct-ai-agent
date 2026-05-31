@@ -748,6 +748,77 @@ def get_collection_stats() -> Dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# 10b. Recent memories (for browsing without a query)
+# ---------------------------------------------------------------------------
+
+
+def get_recent_memories(
+    n_results: int = 20,
+) -> List[SearchResult]:
+    """
+    Retrieve the most recent memories across all collections.
+
+    This is a lightweight browsing endpoint that does not require a search
+    query.  It uses ChromaDB's ``.get()`` to fetch the latest entries by
+    relying on the fact that UUIDs are time-sortable in the default
+    configuration, then sorts by the ``timestamp`` metadata field.
+
+    Parameters
+    ----------
+    n_results:
+        Maximum number of results to return.
+
+    Returns
+    -------
+    List[SearchResult]
+        Recent memories sorted by timestamp (newest first).
+    """
+    results: List[SearchResult] = []
+
+    for collection_name in (CONVERSATION_COLLECTION, CODE_COLLECTION):
+        try:
+            collection = _get_or_create_collection(collection_name)
+            count = collection.count()
+            if count == 0:
+                continue
+
+            fetch_n = min(n_results, count)
+            raw = collection.get(
+                limit=fetch_n,
+                include=["documents", "metadatas"],
+            )
+
+            ids = raw.get("ids", [])
+            docs = raw.get("documents", [])
+            metas = raw.get("metadatas", [])
+
+            for mem_id, doc, meta in zip(ids, docs, metas):
+                if not doc or not isinstance(meta, dict):
+                    continue
+                results.append(
+                    SearchResult(
+                        id=mem_id,
+                        text=doc,
+                        source=meta.get("source", collection_name),
+                        distance=0.0,
+                        metadata=meta,
+                        relevance_score=0.0,
+                    )
+                )
+        except Exception as exc:
+            logger.warning("Failed to get recent memories from %s: %s", collection_name, exc)
+            continue
+
+    # Sort by timestamp descending (newest first)
+    def _sort_key(r: SearchResult) -> str:
+        ts = r.metadata.get("timestamp", "")
+        return ts if isinstance(ts, str) else ""
+
+    results.sort(key=_sort_key, reverse=True)
+    return results[:n_results]
+
+
+# ---------------------------------------------------------------------------
 # 11. Hybrid search (vector + SQLite text search fusion)
 # ---------------------------------------------------------------------------
 
