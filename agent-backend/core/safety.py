@@ -99,6 +99,50 @@ AUTH_CODE_PATTERNS: List[str] = [
     r"certificate",
 ]
 
+# Code-level security patterns (structured rules with severity and category)
+CODE_SECURITY_PATTERNS: List[Dict[str, str]] = [
+    # 42. Path traversal in file paths
+    {
+        "name": "path_traversal",
+        "pattern": r"\.\./|\.\.\\|/\.\./|\\\.\.\\",
+        "severity": "critical",
+        "category": "file_security",
+        "description": "Path traversal sequence detected (e.g. ../ or ..\\)",
+    },
+    # 43. SQL injection in strings
+    {
+        "name": "sql_injection",
+        "pattern": r"(?i)(SELECT\s+.*FROM|INSERT\s+INTO|DELETE\s+FROM|DROP\s+TABLE)\s+.*['\"]",
+        "severity": "critical",
+        "category": "injection",
+        "description": "Potential SQL injection: raw SQL with string interpolation",
+    },
+    # 44. Hardcoded secrets in code
+    {
+        "name": "hardcoded_secret",
+        "pattern": r"(?i)(password|secret|token|key)\s*=\s*['\"][^'\"]{8,}['\"]",
+        "severity": "high",
+        "category": "secrets",
+        "description": "Hardcoded secret detected: credential assigned to a string literal",
+    },
+    # 45. Unsafe deserialization
+    {
+        "name": "unsafe_deserialization",
+        "pattern": r"(?i)(pickle\.loads|yaml\.load|eval\()\s*\(",
+        "severity": "high",
+        "category": "injection",
+        "description": "Unsafe deserialization: pickle.loads, yaml.load, or eval() can execute arbitrary code",
+    },
+    # 46. Command injection via shell metacharacters
+    {
+        "name": "command_injection",
+        "pattern": r";\s*(rm|curl|wget|bash|sh|python|perl|nc|ncat)\s",
+        "severity": "critical",
+        "category": "injection",
+        "description": "Potential command injection: shell metacharacter followed by dangerous command",
+    },
+]
+
 # Known safe providers that don't need approval
 KNOWN_PROVIDERS: Set[str] = {
     "openai", "anthropic", "google", "ollama", "local",
@@ -180,6 +224,7 @@ class SafetyMonitor:
             self.check_architecture(session),
             self.check_test_failure(session),
             self.check_protected_paths(session),
+            self.check_code_security(session),
             return_exceptions=True,
         )
 
@@ -371,6 +416,98 @@ class SafetyMonitor:
 
         return SafetyCheckResult(should_pause=False, reason="No protected paths accessed")
 
+    async def check_code_security(self, session: Any) -> SafetyCheckResult:
+        """Scan session context for code-level security violations.
+
+        Checks for path traversal, SQL injection, hardcoded secrets, and
+        unsafe deserialization patterns in tool call arguments, task
+        descriptions, and generated code.
+        """
+        if not CODE_SECURITY_PATTERNS:
+            return SafetyCheckResult(should_pause=False, reason="no code security patterns")
+
+        # Collect all text to scan from the session
+        text_to_scan = ""
+
+        # Scan goal
+        if hasattr(session, "goal"):
+            text_to_scan += f" {session.goal}"
+
+        # Scan task descriptions and results
+        if hasattr(session, "tasks"):
+            for task in session.tasks:
+                if hasattr(task, "description"):
+                    text_to_scan += f" {task.description}"
+                if hasattr(task, "result") and task.result:
+                    text_to_scan += f" {task.result}"
+                # Scan tool call arguments
+                tool_calls = getattr(task, "tool_calls", [])
+                for tc in tool_calls:
+                    args = tc.get("arguments", {})
+                    for key in ("content", "command", "file_path", "path", "code", "query"):
+                        val = args.get(key, "")
+                        if val:
+                            text_to_scan += f" {val}"
+
+        # Also scan the session's output log for generated code
+        if hasattr(session, "output_log"):
+            for event in session.output_log[-20:]:  # Check last 20 events
+                if isinstance(event, dict):
+                    content = event.get("content", "")
+                    if content:
+                        text_to_scan += f" {content}"
+
+        if not text_to_scan.strip():
+            return SafetyCheckResult(should_pause=False, reason="no text to scan for code security")
+
+        for rule in CODE_SECURITY_PATTERNS:
+            try:
+                if re.search(rule["pattern"], text_to_scan):
+                    return SafetyCheckResult(
+                        should_pause=True,
+                        reason=f"Code security violation: {rule['description']}",
+                        severity=rule["severity"],
+                        category=rule["category"],
+                    )
+            except re.error as exc:
+                logger.warning(
+                    "Invalid regex in code security rule '%s': %s",
+                    rule["name"], exc,
+                )
+
+        return SafetyCheckResult(should_pause=False, reason="No code security violations detected")
+
+    def check_code_security_text(self, text: str) -> SafetyCheckResult:
+        """Check a single piece of text against code security patterns.
+
+        Useful for scanning file content, command strings, or code snippets
+        before they are written or executed.
+
+        Parameters
+        ----------
+        text:
+            The text to scan for security violations.
+        """
+        if not text or not CODE_SECURITY_PATTERNS:
+            return SafetyCheckResult(should_pause=False, reason="nothing to scan")
+
+        for rule in CODE_SECURITY_PATTERNS:
+            try:
+                if re.search(rule["pattern"], text):
+                    return SafetyCheckResult(
+                        should_pause=True,
+                        reason=f"Code security violation: {rule['description']}",
+                        severity=rule["severity"],
+                        category=rule["category"],
+                    )
+            except re.error as exc:
+                logger.warning(
+                    "Invalid regex in code security rule '%s': %s",
+                    rule["name"], exc,
+                )
+
+        return SafetyCheckResult(should_pause=False, reason="No code security violations detected")
+
     def check_api_key_needed(self, provider: str) -> SafetyCheckResult:
         """Check whether this is the first time we're using a given service.
 
@@ -417,6 +554,18 @@ class SafetyMonitor:
         return {
             "used_providers": sorted(self._used_providers),
             "deletion_count": self._deletion_count,
+            "pattern_counts": {
+                "destructive": len(DESTRUCTIVE_TOOL_PATTERNS),
+                "architecture": len(ARCHITECTURE_PATTERNS),
+                "auth_code": len(AUTH_CODE_PATTERNS),
+                "code_security": len(CODE_SECURITY_PATTERNS),
+                "total": (
+                    len(DESTRUCTIVE_TOOL_PATTERNS)
+                    + len(ARCHITECTURE_PATTERNS)
+                    + len(AUTH_CODE_PATTERNS)
+                    + len(CODE_SECURITY_PATTERNS)
+                ),
+            },
             "settings": {
                 "require_approval_for": self.settings.require_approval_for,
                 "max_consecutive_failures": self.settings.max_consecutive_failures,

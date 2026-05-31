@@ -204,7 +204,7 @@ Key settings:
 
 ## Security
 
-- 41 regex patterns covering destructive operations, architecture changes, and auth/payment code
+- 45 regex patterns covering destructive operations, architecture changes, auth/payment code, and code-level security
 - Path traversal protection at tool level
 - Configurable protected paths
 - AgentShield scans all generated code before execution
