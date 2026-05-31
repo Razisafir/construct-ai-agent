@@ -90,3 +90,27 @@ Stage Summary:
 - Security count verified: "41 regex patterns" (not "44")
 - Roadmap section correctly isolates unbuilt features (MCP, screen control, auto-updates, plugin marketplace, multi-project workspaces)
 - No unimplemented feature claims in Capabilities or Tech Stack sections
+---
+Task ID: 2.5
+Agent: Main Agent
+Task: SSE Streaming — Add Token-Level SSE Streaming (Prompt 2.5)
+
+Work Log:
+- Checked all 4 files for existing SSE streaming implementation
+- Found complete implementation already exists:
+  1. app.py: GET /agent/{session_id}/stream (lines 985-1095) — full SSE with output_log events + token events + done/timeout
+  2. llm_service.py: stream_complete() (line 853) + _token_buffers dict (line 269) — token buffering for SSE consumption
+  3. agent.rs: stream_agent_events() (lines 566-641) — Rust SSE consumer using reqwest bytes_stream + Tauri emit
+  4. AgentPanel.tsx: listen('agent:{sessionId}') handler (line 232) — processes token/thought/tool_call/done events
+- Verified SSE streaming pipeline: LLM → stream_complete() → _token_buffers → SSE endpoint → Rust bytes_stream → Tauri emit → Frontend
+- Verified no polling setInterval in frontend — SSE is primary, get_agent_output exists only as paginated fallback
+- Verified streamingText state accumulation + real-time display (lines 269-279, 845-856)
+- Verified Rust command registered in lib.rs (line 93)
+- All 4 success criteria PASS — no changes needed
+
+Stage Summary:
+- SSE endpoint returns streaming data ✓ (GET /agent/{id}/stream with dual output_log + token events)
+- Rust consumes SSE without polling ✓ (stream_agent_events using reqwest bytes_stream)
+- Frontend shows tokens in real-time ✓ (streamingText state + purple text display)
+- No polling HTTP requests in Network tab ✓ (no setInterval polling, SSE is primary)
+- Implementation was committed in prior commit 41ce13f ("feat(streaming): token-level SSE from LLM to UI")
