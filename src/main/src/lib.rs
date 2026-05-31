@@ -130,7 +130,14 @@ async fn check_for_updates(app_handle: tauri::AppHandle) {
                 // plugins.updater.dialog is true in tauri.conf.json.
                 // download_and_install will show the dialog, download,
                 // and restart the app after the user confirms.
-                match update.download_and_install().await {
+                match update.download_and_install(
+                    |chunk_len, content_len| {
+                        log::debug!("Downloaded {} bytes (total: {:?})", chunk_len, content_len);
+                    },
+                    || {
+                        log::info!("Update download finished, installing...");
+                    },
+                ).await {
                     Ok(()) => {
                         log::info!("Update installed successfully — app will restart");
                     }
