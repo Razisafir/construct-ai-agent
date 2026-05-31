@@ -223,3 +223,30 @@ Stage Summary:
 - Commit: bcdd5a5 "feat: expand safety monitor to 45 patterns — path traversal, SQL injection, secrets, deserialization, command injection"
 - 45 total regex patterns (9 destructive + 11 architecture + 20 auth_code + 5 code_security)
 - All success criteria met: 45+ patterns ✓, path traversal added ✓, README updated to 45 ✓, existing tests pass ✓
+---
+Task ID: 4.2
+Agent: Main Agent
+Task: Git Sandboxing — Agent works on feature branch, not main (Prompt 4.2)
+
+Work Log:
+- Read existing executor.py: found _create_feature_branch() already existed (created in earlier session), but was missing git_branch field on AgentSession
+- Added `git_branch: Optional[str] = None` field to AgentSession dataclass
+- Updated AgentSession.to_dict() to include git_branch in serialized output
+- Updated _create_feature_branch() to store branch name on session.git_branch on success
+- Changed branch naming from `construct/{session.id}` to `construct-agent/{session.id}` (matches prompt spec "construct-agent" prefix)
+- Added checkout success verification in _create_feature_branch() — only sets git_branch if checkout succeeds
+- Moved _create_feature_branch() call from _run() to start_session() so branch name is available immediately when session is returned to caller
+- Removed duplicate _create_feature_branch() call from _run()
+- Updated start_session() log to include git_branch info
+- Verified with real git operations: branch creation, checkout, branch naming
+- Verified AgentSession git_branch field and to_dict() serialization
+- Committed: 8fd0a4d
+
+Stage Summary:
+- All 4 success criteria verified:
+  1. ✅ Agent creates feature branch on start (construct-agent/{session-id})
+  2. ✅ All commits go to feature branch (git checkout switches before execution)
+  3. ✅ Main branch untouched (verified: `git branch` shows main unchanged)
+  4. ✅ Branch name includes "construct-agent" (construct-agent/{session-id})
+- Key changes: AgentSession.git_branch field, _create_feature_branch stores branch name, moved to start_session
+- Commit: 8fd0a4d "feat: git sandboxing — agent works on feature branch, not main"
