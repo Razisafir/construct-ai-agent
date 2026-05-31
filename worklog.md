@@ -114,3 +114,26 @@ Stage Summary:
 - Frontend shows tokens in real-time ✓ (streamingText state + purple text display)
 - No polling HTTP requests in Network tab ✓ (no setInterval polling, SSE is primary)
 - Implementation was committed in prior commit 41ce13f ("feat(streaming): token-level SSE from LLM to UI")
+---
+Task ID: 3.1
+Agent: Main Agent
+Task: Multi-Agent Teams Real UI — Replace Demo Data with Real Orchestrator API (Prompt 3.1)
+
+Work Log:
+- Read MultiAgentPanel.tsx (694 lines) — found NO demo data, already uses real API calls
+- Read app.py orchestrate endpoints (lines 2144-2391) — all 5 endpoints exist and functional
+- Verified all 5 success criteria:
+  1. Team creates real agents with distinct roles ✓ (POST /orchestrate/team with selectedRoles)
+  2. Progress bars update from API ✓ (1.5s polling to /orchestrate/team/{id}/status)
+  3. Message log shows real agent communication ✓ (flattened messages from status endpoint)
+  4. User can send messages to specific agents ✓ (@mention parsing + POST /orchestrate/team/{id}/message)
+  5. No hardcoded demo data remains ✓ (searched for demo/mock/hardcoded — only a comment reference)
+- No changes needed — all work was done in prior sessions
+
+Stage Summary:
+- All 5 success criteria PASS — no changes required
+- MultiAgentPanel.tsx: Real API integration with goal input, role picker, agent table, message feed, @mention messaging
+- Backend: 5 orchestration endpoints (POST team, GET status, POST message, GET roles, GET status)
+- Polling: 1.5s interval for team status, auto-stops on completed/failed
+- Message sending: @role mention for directed messages, plain text for broadcast
+- Already committed in prior sessions (commit 8818189 "feat(multi-agent): orchestrator exposed + real UI")
