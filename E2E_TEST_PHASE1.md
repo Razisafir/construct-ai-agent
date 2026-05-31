@@ -151,23 +151,23 @@ The Rust/Tauri side uses SQLite at `~/.local/share/construct/construct.db` with 
 
 ```
 User Goal
-    │
-    ▼
+    |
+    v
 AgentExecutor.plan()
-    │  ← recall_context(query=goal, limit=5)
-    │     injects "RELEVANT PAST CONTEXT" into planning prompt
-    ▼
+    |  <- recall_context(query=goal, limit=5)
+    |     injects "RELEVANT PAST CONTEXT" into planning prompt
+    v
 AgentExecutor.act()
-    │  ← executes tool calls (write_file, edit_file, etc.)
-    │  ← store_code_event() records each change
-    │  ← store_conversation_message() records each turn
-    ▼
+    |  <- executes tool calls (write_file, edit_file, etc.)
+    |  <- store_code_event() records each change
+    |  <- store_conversation_message() records each turn
+    v
 AgentExecutor.observe()
-    │  ← recall_context(query=goal, limit=3)
-    │     checks if result matches expectations
-    ▼
+    |  <- recall_context(query=goal, limit=3)
+    |     checks if result matches expectations
+    v
 AgentExecutor.complete()
-    └  ← store_conversation_message(role="assistant", content=summary)
+    +  <- store_conversation_message(role="assistant", content=summary)
 ```
 
 All memory write and recall points are wired and functional:
