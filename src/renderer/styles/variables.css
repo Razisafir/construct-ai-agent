@@ -1,0 +1,159 @@
+/* ============================================================
+   Design Tokens — Construct AI Agent v2
+   Electric Cyan + Muted Gold + Deep Onyx Aesthetic
+   ============================================================ */
+
+:root {
+  /* ----------------------------------------------------------
+     Color: Surfaces (Material Design 3 style naming)
+     ---------------------------------------------------------- */
+  --surface:                     #111316;
+  --surface-dim:                 #111316;
+  --surface-container-lowest:    #0c0e11;  /* deepest bg */
+  --surface-container-low:       #1a1c1f;
+  --surface-container:           #1e2023;  /* elevated / hover */
+  --surface-container-high:      #282a2d;  /* borders, scrollbar thumb */
+  --surface-container-highest:   #333538;  /* active states */
+
+  /* Legacy surface aliases (back-compat) */
+  --c-base:              var(--surface-container-lowest);
+  --c-s1:                #141619;  /* panel-bg */
+  --c-s2:                var(--surface-container);
+  --c-s3:                var(--surface-container-high);
+  --c-s4:                var(--surface-container-highest);
+
+  /* ----------------------------------------------------------
+     Color: Accent — Electric Cyan (agent activity)
+     ---------------------------------------------------------- */
+  --c-accent:            #00f5ff;  /* primary — Electric Cyan */
+  --c-accent-dim:        rgba(0, 245, 255, 0.15);
+  --c-accent-hover:      #33f7ff;  /* lighter cyan for hover */
+  --primary:             #00f5ff;
+  --primary-dim:         rgba(0, 245, 255, 0.15);
+
+  /* ----------------------------------------------------------
+     Color: Secondary — Muted Gold (memory/context)
+     ---------------------------------------------------------- */
+  --c-gold:              #e9c349;  /* secondary — Muted Gold */
+  --c-gold-dim:          rgba(233, 195, 73, 0.15);
+  --secondary:           #e9c349;
+  --secondary-dim:       rgba(233, 195, 73, 0.15);
+
+  /* ----------------------------------------------------------
+     Color: Tertiary / Error
+     ---------------------------------------------------------- */
+  --tertiary:            #ffb4ab;
+  --tertiary-dim:        rgba(255, 180, 171, 0.15);
+  --c-err:               #f87171;  /* diff-remove / error */
+  --c-err-bg:            rgba(248, 113, 113, 0.1);
+
+  /* ----------------------------------------------------------
+     Color: Success
+     ---------------------------------------------------------- */
+  --success:             #22c55e;
+  --success-dim:         rgba(34, 197, 94, 0.15);
+  --c-running:           #22c55e;
+  --c-running-bg:        rgba(34, 197, 94, 0.15);
+
+  /* ----------------------------------------------------------
+     Color: Text (warm whites / grays)
+     ---------------------------------------------------------- */
+  --on-surface:          #e2e2e6;  /* primary text */
+  --on-surface-variant:  #849495;  /* secondary text */
+  --c-text:              #e2e2e6;  /* on-surface — primary */
+  --c-text2:             #b9caca;  /* on-surface-variant — secondary */
+  --c-text3:             #849495;  /* outline — muted */
+  --c-text4:             #3a494a;  /* outline-variant — barely visible */
+
+  /* ----------------------------------------------------------
+     Color: Outlines
+     ---------------------------------------------------------- */
+  --outline:             #849495;
+  --outline-variant:     #3a494a;
+
+  /* ----------------------------------------------------------
+     Color: Semantic
+     ---------------------------------------------------------- */
+  --c-ok:   #4ade80;  /* diff-add / success */
+  --c-ok-bg: rgba(74, 222, 128, 0.1);
+  --c-warn: #f59e0b;  /* amber / warning */
+  --c-info: #60a5fa;  /* blue / info */
+
+  /* ----------------------------------------------------------
+     Color: Borders
+     ---------------------------------------------------------- */
+  --c-border:            #282a2d;
+  --c-border-active:     rgba(0, 245, 255, 0.30);
+
+  /* ----------------------------------------------------------
+     Color: Glassmorphism
+     ---------------------------------------------------------- */
+  --glass-bg:            rgba(20, 22, 25, 0.6);
+  --glass-blur:          12px;
+
+  /* ----------------------------------------------------------
+     Color: Glow effects
+     ---------------------------------------------------------- */
+  --glow-cyan:           0 0 12px rgba(0, 245, 255, 0.2);
+  --border-glow-cyan:    1px solid rgba(0, 245, 255, 0.4);
+
+  /* ----------------------------------------------------------
+     Typography
+     ---------------------------------------------------------- */
+  --font-sans:           "Inter", "system-ui", "sans-serif";
+  --font-mono:           "JetBrains Mono", "Fira Code", "Consolas", monospace;
+
+  --text-xs:   10px;  /* micro-labels   */
+  --text-sm:   11px;  /* data / numbers */
+  --text-base: 12px;  /* body           */
+  --text-lg:   13px;  /* headings       */
+  --text-xl:   14px;  /* emphasis       */
+  --text-2xl:  16px;  /* max allowed    */
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.4;
+  --leading-relaxed: 1.6;
+
+  /* ----------------------------------------------------------
+     Spacing (px values, max 24)
+     ---------------------------------------------------------- */
+  --space-1:  4px;
+  --space-2:  6px;
+  --space-3:  8px;
+  --space-4:  12px;
+  --space-5:  16px;
+  --space-6:  24px;
+
+  /* ----------------------------------------------------------
+     Borders & Radius
+     ---------------------------------------------------------- */
+  --radius-sm:   2px;
+  --radius-default: 4px;
+  --radius-md:   6px;
+  --radius-lg:   8px;
+
+  /* ----------------------------------------------------------
+     Animation
+     ---------------------------------------------------------- */
+  --dur-fast:   100ms;
+  --dur-normal: 150ms;
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ----------------------------------------------------------
+     Scrollbar
+     ---------------------------------------------------------- */
+  --scrollbar-width: 8px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #282a2d;
+
+  /* ----------------------------------------------------------
+     Shadows (functional + glow)
+     ---------------------------------------------------------- */
+  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-md:  0 4px 12px rgba(0, 0, 0, 0.50);
+  --shadow-lg:  0 8px 24px rgba(0, 0, 0, 0.60);
+}

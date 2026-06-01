@@ -1,0 +1,40 @@
+{
+  "identifier": "default",
+  "description": "Default permissions for the Construct application",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "fs:default",
+    "fs:allow-app-read",
+    "fs:allow-app-write",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file",
+    "fs:allow-exists",
+    "fs:allow-mkdir",
+    "dialog:default",
+    "notification:default",
+    "shell:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "args": true,
+          "cmd": "agent-backend",
+          "name": "agent-backend",
+          "sidecar": true
+        }
+      ]
+    },
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        {
+          "args": true,
+          "cmd": "agent-backend",
+          "name": "agent-backend",
+          "sidecar": true
+        }
+      ]
+    }
+  ]
+}
