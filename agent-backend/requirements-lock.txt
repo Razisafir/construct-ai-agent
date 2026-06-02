@@ -21,7 +21,7 @@ playwright==1.49.1
 
 # Transitive dependencies (key ones)
 numpy>=1.24.0
-torch>=2.0.0
+torch>=2.12.0
 transformers>=4.30.0
 huggingface-hub>=0.16.0
 tokenizers>=0.13.0
