@@ -2,7 +2,7 @@
 # =================================================
 
 # Vector database
-chromadb==0.5.23
+chromadb==1.5.9
 
 # Sentence embeddings
 sentence-transformers==3.3.1
