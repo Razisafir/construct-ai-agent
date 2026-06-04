@@ -1,0 +1,23 @@
+{
+  "code": 200,
+  "data": {
+    "description": "",
+    "external": {},
+    "html": "<html><head><meta name=\"color-scheme\" content=\"light dark\"><meta charset=\"utf-8\"></head><body><pre>{\n  \"message\": \"Must have admin rights to Repository.\",\n  \"documentation_url\": \"https://docs.github.com/rest/actions/workflow-jobs#download-job-logs-for-a-workflow-run\",\n  \"status\": \"403\"\n}\n</pre><div class=\"json-formatter-container\"></div></body></html>",
+    "metadata": {
+      "color-scheme": "light dark"
+    },
+    "title": "",
+    "url": "https://api.github.com/repos/Razisafir/construct-ai-agent/actions/jobs/78489087710/logs",
+    "usage": {
+      "tokens": 94
+    },
+    "warning": "Target URL returned error 403: Forbidden"
+  },
+  "meta": {
+    "usage": {
+      "tokens": 94
+    }
+  },
+  "status": 20000
+}

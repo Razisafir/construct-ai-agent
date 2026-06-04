@@ -1,0 +1,98 @@
+{
+  "results": [
+    {
+      "step": "C1: Health check",
+      "expected": "status=ok",
+      "actual": "status=ok",
+      "pass": true
+    },
+    {
+      "step": "C2: write_file relative path",
+      "expected": "success=true",
+      "actual": "success=True",
+      "pass": true
+    },
+    {
+      "step": "C2b: File on disk (CWD)",
+      "expected": "print(\"Direct tool test\")",
+      "actual": "print(\"Direct tool test\")\n",
+      "pass": true
+    },
+    {
+      "step": "C3: write_file absolute path",
+      "expected": "success=true",
+      "actual": "success=False",
+      "pass": false
+    },
+    {
+      "step": "C3b: File on disk (absolute)",
+      "expected": "E2E test",
+      "actual": "NOT FOUND",
+      "pass": null
+    },
+    {
+      "step": "C4: read_file roundtrip",
+      "expected": "E2E test content",
+      "actual": "",
+      "pass": false
+    },
+    {
+      "step": "C5: list_directory",
+      "expected": "e2e_test.py in listing",
+      "actual": "[]",
+      "pass": false
+    },
+    {
+      "step": "B1: Agent session started",
+      "expected": "session_id + status=running",
+      "actual": "session_id=87cc01f1, status=idle",
+      "pass": true
+    },
+    {
+      "step": "B2: Agent completed",
+      "expected": "status=completed",
+      "actual": "status=completed",
+      "pass": true
+    },
+    {
+      "step": "B3: mock_test.py on disk",
+      "expected": "prints hello",
+      "actual": "print(\"Hello from Construct!\")",
+      "pass": true
+    },
+    {
+      "step": "B4: Agent output log",
+      "expected": "write_file events > 0",
+      "actual": "write_file events: 1",
+      "pass": true
+    },
+    {
+      "step": "B5: Task summary",
+      "expected": "completed > 0",
+      "actual": "{'total': 2, 'pending': 0, 'in_progress': 0, 'completed': 2, 'failed': 0}",
+      "pass": true
+    },
+    {
+      "step": "D1: Create modify_test.py",
+      "expected": "Version 1",
+      "actual": "print(\"Version 1\")\n\ndef original():\n    return \"or",
+      "pass": true
+    },
+    {
+      "step": "D2: Overwrite modify_test.py",
+      "expected": "Version 2",
+      "actual": "print(\"Version 2 - Updated via diff\")\n\ndef modifie",
+      "pass": true
+    },
+    {
+      "step": "D3: File actually changed on disk",
+      "expected": "Version 2 - Updated via diff",
+      "actual": "print(\"Version 2 - Updated via diff\")\n\ndef modified():\n    return \"updated\"\n",
+      "pass": true
+    }
+  ],
+  "total": 15,
+  "passed": 11,
+  "failed": 4,
+  "all_pass": false
+}

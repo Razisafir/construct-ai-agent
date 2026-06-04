@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Construct</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.4; background: #0c0c10; color: #e8e8ec; overflow: hidden; width: 100vw; height: 100vh; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #22222e; }
+    .border-b { border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .border-r { border-right: 1px solid rgba(255,255,255,0.04); }
+    .border-t { border-top: 1px solid rgba(255,255,255,0.04); }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .flex-1 { flex: 1; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .gap-1 { gap: 4px; }
+    .gap-2 { gap: 8px; }
+    .p-1 { padding: 4px; }
+    .p-2 { padding: 6px 8px; }
+    .p-3 { padding: 12px; }
+    .px-2 { padding-left: 8px; padding-right: 8px; }
+    .px-3 { padding-left: 12px; padding-right: 12px; }
+    .py-1 { padding-top: 4px; padding-bottom: 4px; }
+    .text-dim { color: #4a4a52; }
+    .text-muted { color: #6b6b73; }
+    .text-sec { color: #94949c; }
+    .text-accent { color: #6366f1; }
+    .text-ok { color: #10b981; }
+    .bg-s1 { background: #12121a; }
+    .bg-s2 { background: #1a1a24; }
+    .bg-base { background: #0c0c10; }
+    .hover:hover { background: #1a1a24; cursor: pointer; }
+    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .uppercase { text-transform: uppercase; letter-spacing: 0.08em; }
+    .text-10 { font-size: 10px; }
+    .text-11 { font-size: 11px; }
+    .text-13 { font-size: 13px; }
+    .fw-600 { font-weight: 600; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .tab-nums { font-variant-numeric: tabular-nums; }
+
+    /* Title bar */
+    .titlebar { height: 28px; background: #0c0c10; border-bottom: 1px solid rgba(255,255,255,0.04); padding: 0 12px; }
+    .titlebar .logo { font-size: 11px; font-weight: 700; letter-spacing: 0.02em; }
+    .titlebar .status { font-size: 10px; color: #4a4a52; }
+
+    /* Sidebar rail */
+    .rail { width: 32px; background: #0c0c10; border-right: 1px solid rgba(255,255,255,0.04); }
+    .rail-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: #4a4a52; font-size: 14px; cursor: pointer; }
+    .rail-icon:hover { color: #e8e8ec; background: #1a1a24; }
+    .rail-icon.active { color: #6366f1; border-left: 2px solid #6366f1; }
+    .rail-badge { font-size: 9px; background: #1a1a24; padding: 1px 3px; border-radius: 2px; color: #94949c; position: absolute; bottom: 2px; right: 2px; }
+
+    /* File tree */
+    .sidebar { width: 248px; background: #0c0c10; border-right: 1px solid rgba(255,255,255,0.04); overflow: auto; }
+    .tree-header { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #6b6b73; padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .tree-header .actions { font-size: 11px; }
+    .tree-item { padding: 2px 12px 2px 24px; font-size: 11px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .tree-item:hover { background: #1a1a24; }
+    .tree-item.active { background: #1a1a24; border-left: 2px solid #6366f1; }
+    .tree-item .badge { font-size: 9px; margin-left: auto; padding: 1px 3px; border-radius: 2px; }
+    .badge-m { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .badge-a { background: rgba(99,102,241,0.15); color: #6366f1; }
+    .tree-ctx { margin: 8px 12px; padding: 6px 8px; background: #1a1a24; border-radius: 2px; }
+    .tree-ctx .tag { display: inline-block; font-size: 10px; padding: 2px 6px; background: #22222e; border-radius: 2px; margin: 2px; color: #94949c; }
+    .tree-mem { font-size: 10px; color: #4a4a52; padding: 8px 12px; font-variant-numeric: tabular-nums; }
+
+    /* Editor */
+    .editor-tabs { height: 28px; background: #0c0c10; display: flex; align-items: flex-end; overflow: hidden; }
+    .tab { padding: 6px 12px; font-size: 11px; color: #6b6b73; border-top: 2px solid transparent; cursor: pointer; }
+    .tab:hover { color: #94949c; background: #12121a; }
+    .tab.active { color: #e8e8ec; background: #1a1a24; border-top-color: #6366f1; }
+    .editor-body { flex: 1; background: #0c0c10; padding: 12px; font-size: 12px; line-height: 1.6; overflow: auto; }
+    .editor-body .ln { display: inline-block; width: 32px; text-align: right; color: #4a4a52; font-size: 10px; margin-right: 12px; user-select: none; }
+    .editor-body .kw { color: #c084fc; }
+    .editor-body .str { color: #10b981; }
+    .editor-body .fn { color: #60a5fa; }
+    .editor-body .cmt { color: #4a4a52; font-style: italic; }
+    .editor-body .agent-cmt { color: #6b6b73; font-style: italic; }
+    .editor-body .type { color: #f59e0b; }
+
+    /* Bottom panel tabs */
+    .panel-tabs { height: 28px; background: #12121a; display: flex; align-items: center; padding: 0 8px; gap: 2px; border-top: 1px solid rgba(255,255,255,0.04); }
+    .ptab { padding: 4px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #4a4a52; cursor: pointer; border-top: 2px solid transparent; }
+    .ptab:hover { color: #6b6b73; background: #1a1a24; }
+    .ptab.active { color: #e8e8ec; background: #1a1a24; border-top-color: #6366f1; }
+
+    /* Status bar */
+    .statusbar { height: 22px; background: #12121a; border-top: 1px solid rgba(255,255,255,0.04); padding: 0 12px; font-size: 10px; color: #4a4a52; font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body class="flex flex-col">
+  <!-- Title Bar -->
+  <div class="titlebar flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span class="text-dim" style="font-size:14px;">&#9776;</span>
+      <span class="logo uppercase">CONSTRUCT</span>
+    </div>
+    <div class="status flex gap-2 tab-nums">
+      <span>agent:idle</span>
+      <span>mem:34%</span>
+      <span>ctx:12k/200k</span>
+    </div>
+    <div class="text-dim" style="font-size:10px;">v0.1.0-alpha</div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="flex flex-1" style="min-height:0;">
+    <!-- Rail -->
+    <div class="rail flex-col" style="position:relative;">
+      <div class="rail-icon active" style="position:relative;">&#128193;<span class="rail-badge">14</span></div>
+      <div class="rail-icon" style="position:relative;">&#946;<span class="rail-badge">3</span></div>
+      <div class="rail-icon" style="position:relative;">&#9889;<span class="rail-badge">1</span></div>
+      <div class="rail-icon" style="position:relative;">&#129504;<span class="rail-badge">47</span></div>
+      <div class="rail-icon" style="position:relative;">&#128295;<span class="rail-badge">12</span></div>
+      <div class="rail-icon" style="position:relative;">&#128268;<span class="rail-badge">5</span></div>
+      <div style="margin-top:auto;" class="rail-icon">&#9881;</div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar flex-col">
+      <div class="tree-header flex justify-between items-center">
+        <span>PROJECT: my-saas</span>
+        <span class="actions text-dim">[+]</span>
+      </div>
+      <div class="tree-item">
+        <span class="text-muted">&#9654;</span>
+        <span>src/</span>
+      </div>
+      <div class="tree-item" style="padding-left:36px;">
+        <span class="text-muted">&#9654;</span>
+        <span>components/</span>
+      </div>
+      <div class="tree-item active" style="padding-left:48px;">
+        <span class="text-muted">&#128196;</span>
+        <span>Button.tsx</span>
+        <span class="badge badge-m">M</span>
+        <span class="badge badge-a">A</span>
+      </div>
+      <div class="tree-item" style="padding-left:48px;">
+        <span class="text-muted">&#128196;</span>
+        <span>Card.tsx</span>
+        <span class="badge badge-m">M</span>
+      </div>
+      <div class="tree-item" style="padding-left:48px;">
+        <span class="text-muted">&#128196;</span>
+        <span>Modal.tsx</span>
+      </div>
+      <div class="tree-item" style="padding-left:36px;">
+        <span class="text-muted">&#9654;</span>
+        <span>hooks/</span>
+      </div>
+      <div class="tree-item" style="padding-left:48px;">
+        <span class="text-muted">&#128196;</span>
+        <span>useAuth.ts</span>
+      </div>
+      <div class="tree-item" style="padding-left:36px;">
+        <span class="text-muted">&#9654;</span>
+        <span>stores/</span>
+      </div>
+      <div class="tree-item" style="padding-left:48px;">
+        <span class="text-muted">&#128196;</span>
+        <span>appStore.ts</span>
+      </div>
+      <div class="tree-item" style="padding-left:36px;">
+        <span class="text-muted">&#128196;</span>
+        <span>App.tsx</span>
+        <span class="badge badge-m">M</span>
+        <span class="badge badge-a">A</span>
+      </div>
+      <div class="border-t" style="margin-top:8px;"></div>
+      <div class="tree-header">ACTIVE CONTEXT</div>
+      <div class="tree-ctx">
+        <span class="tag">react-hooks</span>
+        <span class="tag">typescript</span>
+        <span class="tag">api-design</span>
+        <span class="tag">auth-flow</span>
+      </div>
+      <div class="border-t" style="margin-top:8px;"></div>
+      <div class="tree-mem tab-nums">
+        MEMORY: 1,247 contexts &nbsp;&nbsp; SEM: 892 &nbsp;&nbsp; EPI: 156
+      </div>
+    </div>
+
+    <!-- Editor Area -->
+    <div class="flex flex-col flex-1" style="min-width:0;">
+      <div class="editor-tabs">
+        <div class="tab active">App.tsx</div>
+        <div class="tab">Button.tsx</div>
+        <div class="tab">useAuth.ts</div>
+      </div>
+      <div class="editor-body">
+        <div><span class="ln">1</span><span class="cmt">// agent: implementing auth based on ctx:react-hooks</span></div>
+        <div><span class="ln">2</span><span class="cmt">// mem: user prefers JWT with 15min expiry</span></div>
+        <div><span class="ln">3</span></div>
+        <div><span class="ln">4</span><span class="kw">import</span> React, { <span class="fn">useState</span> } <span class="kw">from</span> <span class="str">'react'</span>;</div>
+        <div><span class="ln">5</span><span class="kw">import</span> { <span class="fn">useAuth</span> } <span class="kw">from</span> <span class="str">'./hooks/useAuth'</span>;</div>
+        <div><span class="ln">6</span></div>
+        <div><span class="ln">7</span><span class="cmt">// agent-suggest: add protected route wrapper</span></div>
+        <div><span class="ln">8</span><span class="kw">export const</span> <span class="type">App</span>: React.<span class="type">FC</span> = () => {</div>
+        <div><span class="ln">9</span>&nbsp;&nbsp;<span class="kw">const</span> { user, isLoading } = <span class="fn">useAuth</span>();</div>
+        <div><span class="ln">10</span>&nbsp;&nbsp;<span class="kw">const</span> [theme, setTheme] = <span class="fn">useState</span>(<span class="str">'dark'</span>);</div>
+        <div><span class="ln">11</span></div>
+        <div><span class="ln">12</span>&nbsp;&nbsp;<span class="kw">if</span> (isLoading) <span class="kw">return</span> &lt;<span class="type">LoadingScreen</span> /&gt;;</div>
+        <div><span class="ln">13</span></div>
+        <div><span class="ln">14</span>&nbsp;&nbsp;<span class="kw">return</span> (</div>
+        <div><span class="ln">15</span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span class="type">ThemeProvider</span> theme={theme}&gt;</div>
+        <div><span class="ln">16</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span class="type">Router</span>&gt;</div>
+        <div><span class="ln">17</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span class="type">Routes</span>&gt;</div>
+        <div><span class="ln">18</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span class="type">Route</span> path=<span class="str">"/"</span> element={&lt;<span class="type">Home</span> /&gt;} /&gt;</div>
+        <div><span class="ln">19</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/<span class="type">Routes</span>&gt;</div>
+        <div><span class="ln">20</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/<span class="type">Router</span>&gt;</div>
+        <div><span class="ln">21</span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/<span class="type">ThemeProvider</span>&gt;</div>
+        <div><span class="ln">22</span>&nbsp;&nbsp;);</div>
+        <div><span class="ln">23</span>};</div>
+      </div>
+
+      <!-- Bottom Panel -->
+      <div style="height: 200px; display: flex; flex-direction: column;">
+        <div class="panel-tabs">
+          <div class="ptab">Terminal</div>
+          <div class="ptab">Chat</div>
+          <div class="ptab active">Agent</div>
+          <div class="ptab">Memory</div>
+          <div class="ptab">Skills</div>
+          <div class="ptab">MCP</div>
+          <div class="ptab">Screen</div>
+          <div class="ptab">Agents</div>
+          <div class="ptab">Auto</div>
+        </div>
+        <div class="flex-1 bg-base p-3" style="overflow: auto; font-size: 11px;">
+          <div class="flex justify-between items-center" style="margin-bottom: 8px;">
+            <span class="text-13 fw-600 truncate" style="max-width: 60%;">GOAL: build saas dashboard with auth, billing, analytics</span>
+            <span class="text-10 text-muted tab-nums">TIME: 02:14:00</span>
+          </div>
+          <div class="text-10 text-muted tab-nums" style="margin-bottom: 8px;">
+            STATUS: <span class="text-accent">working</span> &nbsp;&nbsp; PROGRESS: 34% &nbsp;&nbsp; TASKS: 4/12
+          </div>
+          <div style="border-top: 1px solid rgba(255,255,255,0.04); margin: 4px 0;"></div>
+          <div class="flex gap-2" style="margin-bottom: 8px;">
+            <span style="padding: 2px 6px; background: #1a1a24; border-radius: 2px; font-size: 10px; cursor: pointer;" class="uppercase hover">Pause</span>
+            <span style="padding: 2px 6px; background: #1a1a24; border-radius: 2px; font-size: 10px; cursor: pointer;" class="uppercase hover">Stop</span>
+            <span style="padding: 2px 6px; background: #1a1a24; border-radius: 2px; font-size: 10px; cursor: pointer;" class="uppercase hover">Checkpoint</span>
+            <span style="padding: 2px 6px; background: #1a1a24; border-radius: 2px; font-size: 10px; cursor: pointer;" class="uppercase hover">Log</span>
+            <span style="margin-left: auto; padding: 2px 6px; background: #1a1a24; border-radius: 2px; font-size: 10px; cursor: pointer;" class="uppercase text-ok hover">Auto: ON</span>
+          </div>
+          <div style="border-top: 1px solid rgba(255,255,255,0.04); margin: 4px 0;"></div>
+          <div class="tab-nums" style="line-height: 1.8;">
+            <div><span class="text-dim">14:32:05</span> <span style="color:#60a5fa;">[INF]</span> starting task: build dashboard layout component</div>
+            <div><span class="text-dim">14:32:08</span> <span style="color:#60a5fa;">[INF]</span> reading patterns from memory ctx:react-hooks</div>
+            <div><span class="text-dim">14:32:12</span> <span class="text-ok">[OK]</span> found 3 relevant patterns</div>
+            <div><span class="text-dim">14:32:15</span> <span style="color:#60a5fa;">[INF]</span> creating DashboardLayout.tsx</div>
+            <div><span class="text-dim">14:32:18</span> <span style="color:#60a5fa;">[INF]</span> writing component with sidebar + main content grid</div>
+            <div><span class="text-dim">14:32:18</span> <span class="text-accent">[WRK]</span> ...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="statusbar flex items-center justify-between">
+    <div class="flex gap-2">
+      <span>CONSTRUCT</span>
+      <span>v0.1.0-alpha</span>
+      <span>main</span>
+    </div>
+    <div class="flex gap-2">
+      <span>agent:idle</span>
+      <span>mem:34%</span>
+      <span>ctx:12k/200k</span>
+    </div>
+    <div class="flex gap-2">
+      <span>ln 23, col 2</span>
+      <span>utf-8</span>
+      <span>typescript</span>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Construct — Agent Team</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.4; background: #0c0c10; color: #e8e8ec; padding: 24px; }
+    .panel { max-width: 1200px; margin: 0 auto; }
+    .border-t { border-top: 1px solid rgba(255,255,255,0.04); }
+    .header { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #6b6b73; padding: 6px 0; }
+    .goal { font-size: 12px; font-weight: 600; padding: 6px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    th { text-align: left; padding: 5px 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #6b6b73; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    td { padding: 4px 8px; color: #94949c; font-variant-numeric: tabular-nums; }
+    tr:hover td { background: #1a1a24; }
+    .role-code { color: #6366f1; }
+    .role-sec { color: #10b981; }
+    .role-ui { color: #f59e0b; }
+    .role-dev { color: #ef4444; }
+    .role-test { color: #60a5fa; }
+    .role-res { color: #c084fc; }
+    .role-pm { color: #ec4899; }
+    .st-working { color: #6366f1; }
+    .st-idle { color: #4a4a52; }
+    .badge { display: inline-block; padding: 1px 4px; border-radius: 2px; font-size: 9px; background: #1a1a24; }
+    .msg { font-size: 11px; font-variant-numeric: tabular-nums; padding: 2px 0; }
+    .msg .ts { color: #4a4a52; }
+    .msg .from { color: #94949c; }
+    .msg .arrow { color: #4a4a52; }
+    .msg .to { color: #94949c; }
+    .msg .type { font-size: 9px; padding: 1px 3px; border-radius: 2px; background: #1a1a24; margin: 0 4px; }
+    .msg .type-req { color: #60a5fa; }
+    .msg .type-res { color: #10b981; }
+    .msg .type-cmp { color: #6366f1; }
+    .msg .type-err { color: #ef4444; }
+    .msg .body { color: #94949c; }
+    .input-line { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 12px; border-top: 1px solid rgba(255,255,255,0.04); margin-top: 8px; }
+    .input-line .prompt { color: #6366f1; }
+    .input-line input { flex: 1; background: transparent; border: none; outline: none; color: #e8e8ec; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <div class="header">AGENT TEAM</div>
+    <div class="border-t"></div>
+    <div class="goal">GOAL: build saas dashboard with auth, billing, analytics</div>
+    <div class="border-t"></div>
+    <table>
+      <thead><tr><th>Role</th><th>Status</th><th>Task</th><th>Progress</th><th>Time</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="role-code">code</td>
+          <td class="st-working">working</td>
+          <td>DashboardLayout.tsx</td>
+          <td>[====      ] 67%</td>
+          <td>00:32</td>
+        </tr>
+        <tr>
+          <td class="role-sec">security</td>
+          <td class="st-idle">idle</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+        <tr>
+          <td class="role-ui">ui</td>
+          <td class="st-idle">idle</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+        <tr>
+          <td class="role-dev">devops</td>
+          <td class="st-idle">idle</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+        <tr>
+          <td class="role-test">test</td>
+          <td class="st-idle">idle</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+        <tr>
+          <td class="role-res">research</td>
+          <td class="st-idle">idle</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+        <tr>
+          <td class="role-pm">pm</td>
+          <td class="st-idle">idle</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="border-t" style="margin-top: 8px;"></div>
+    <div class="header">MESSAGES</div>
+    <div style="padding: 4px 0;">
+      <div class="msg">
+        <span class="ts">14:32:05</span>
+        <span class="from">code</span> <span class="arrow">&rarr;</span> <span class="to">security</span>
+        <span class="type type-req">REQ</span>
+        <span class="body">review auth implementation</span>
+      </div>
+      <div class="msg">
+        <span class="ts">14:32:08</span>
+        <span class="from">security</span> <span class="arrow">&rarr;</span> <span class="to">code</span>
+        <span class="type type-res">RES</span>
+        <span class="body">approved, no issues found</span>
+      </div>
+      <div class="msg">
+        <span class="ts">14:32:12</span>
+        <span class="from">code</span> <span class="arrow">&rarr;</span> <span class="to">pm</span>
+        <span class="type type-cmp">CMP</span>
+        <span class="body">DashboardLayout.tsx complete</span>
+      </div>
+      <div class="msg">
+        <span class="ts">14:32:15</span>
+        <span class="from">code</span> <span class="arrow">&rarr;</span> <span class="to">test</span>
+        <span class="type type-req">REQ</span>
+        <span class="body">write tests for DashboardLayout</span>
+      </div>
+      <div class="msg">
+        <span class="ts">14:32:18</span>
+        <span class="from">test</span> <span class="arrow">&rarr;</span> <span class="to">code</span>
+        <span class="type type-err">ERR</span>
+        <span class="body">missing test for sidebar collapse</span>
+      </div>
+    </div>
+    <div class="input-line">
+      <span class="prompt">&gt;</span>
+      <input type="text" value="@security review DashboardLayout.tsx" autofocus>
+    </div>
+  </div>
+</body>
+</html>

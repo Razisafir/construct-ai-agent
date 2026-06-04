@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Construct — Setup</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.4; background: #0c0c10; color: #e8e8ec; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .modal { width: 520px; background: #0c0c10; border: 1px solid rgba(255,255,255,0.04); padding: 32px; }
+    .title { font-size: 14px; font-weight: 700; text-align: center; letter-spacing: 0.04em; }
+    .subtitle { font-size: 11px; color: #6b6b73; text-align: center; margin-top: 4px; }
+    .border-t { border-top: 1px solid rgba(255,255,255,0.04); margin: 16px 0; }
+    .step-header { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #6b6b73; margin: 12px 0 8px 0; }
+    .step-active { color: #6366f1; }
+    label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #6b6b73; margin-bottom: 4px; }
+    input[type="text"] { width: 100%; background: #12121a; border: 1px solid rgba(255,255,255,0.04); padding: 6px 10px; color: #e8e8ec; font-family: 'JetBrains Mono', monospace; font-size: 11px; outline: none; }
+    input[type="text"]:focus { border-color: rgba(99,102,241,0.3); }
+    input[type="text"]::placeholder { color: #4a4a52; }
+    .radio-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; font-size: 11px; color: #94949c; }
+    .radio-row:hover { color: #e8e8ec; }
+    .radio-row .dot { font-size: 14px; color: #4a4a52; }
+    .radio-row.selected .dot { color: #6366f1; }
+    .radio-row.selected { color: #e8e8ec; }
+    .radio-row .note { font-size: 10px; color: #4a4a52; margin-left: 4px; }
+    .btn-row { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
+    .btn { padding: 4px 12px; background: #1a1a24; border-radius: 2px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: #94949c; cursor: pointer; border: none; font-family: 'JetBrains Mono', monospace; }
+    .btn:hover { background: #22222e; color: #e8e8ec; }
+    .btn-primary { background: #6366f1; color: #e8e8ec; }
+    .btn-primary:hover { background: #818cf8; }
+    .ready-text { font-size: 11px; color: #94949c; text-align: center; margin: 16px 0; }
+    .kbd { font-size: 10px; color: #4a4a52; }
+  </style>
+</head>
+<body>
+  <div class="modal">
+    <div class="title">CONSTRUCT</div>
+    <div class="subtitle">Autonomous AI coding agent. Persistent memory. 24/7 execution.</div>
+    <div class="border-t"></div>
+
+    <div class="step-header step-active">[1/5] PROJECT</div>
+    <label>PATH</label>
+    <input type="text" value="/home/dev/projects/my-saas" autofocus>
+
+    <div class="border-t"></div>
+
+    <div class="step-header">[2/5] GOAL</div>
+    <input type="text" placeholder="What would you like to build?" style="margin-top:4px;">
+
+    <div class="border-t"></div>
+
+    <div class="step-header">[3/5] LLM PROVIDER</div>
+    <div class="radio-row selected">
+      <span class="dot">&#9673;</span>
+      <span>Local (Ollama)</span>
+    </div>
+    <div class="radio-row">
+      <span class="dot">&#9675;</span>
+      <span>Claude</span>
+      <span class="note">API key required</span>
+    </div>
+    <div class="radio-row">
+      <span class="dot">&#9675;</span>
+      <span>GPT</span>
+      <span class="note">API key required</span>
+    </div>
+    <div class="radio-row">
+      <span class="dot">&#9675;</span>
+      <span>Gemini</span>
+      <span class="note">API key required</span>
+    </div>
+
+    <div class="border-t"></div>
+
+    <div class="step-header">[4/5] THEME</div>
+    <div class="radio-row selected">
+      <span class="dot">&#9673;</span>
+      <span>Dark</span>
+    </div>
+    <div class="radio-row">
+      <span class="dot">&#9675;</span>
+      <span>Light</span>
+    </div>
+    <div class="radio-row">
+      <span class="dot">&#9675;</span>
+      <span>System</span>
+    </div>
+
+    <div class="border-t"></div>
+
+    <div class="step-header">[5/5] READY</div>
+    <div class="ready-text">All set. Press <span class="kbd">Enter</span> to begin.</div>
+
+    <div class="border-t"></div>
+    <div class="btn-row">
+      <button class="btn">&lt; Back</button>
+      <button class="btn">Skip</button>
+      <button class="btn btn-primary">Next &gt;</button>
+    </div>
+  </div>
+</body>
+</html>

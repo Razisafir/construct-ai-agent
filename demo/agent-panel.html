@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Construct — Agent Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.4; background: #0c0c10; color: #e8e8ec; padding: 24px; }
+    .panel { max-width: 1200px; margin: 0 auto; }
+    .border-t { border-top: 1px solid rgba(255,255,255,0.04); }
+    .header { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #6b6b73; padding: 6px 0; }
+    .goal { font-size: 12px; font-weight: 600; padding: 8px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .status-bar { font-size: 10px; font-variant-numeric: tabular-nums; color: #4a4a52; padding: 4px 0; }
+    .status-bar .working { color: #6366f1; }
+    .btn { display: inline-block; padding: 2px 6px; background: #1a1a24; border-radius: 2px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; color: #94949c; margin-right: 4px; }
+    .btn:hover { background: #22222e; color: #e8e8ec; }
+    .btn-auto { margin-left: auto; color: #10b981; }
+    .log { font-size: 11px; line-height: 1.8; font-variant-numeric: tabular-nums; }
+    .log .ts { color: #4a4a52; }
+    .log .inf { color: #60a5fa; }
+    .log .ok { color: #10b981; }
+    .log .wrn { color: #f59e0b; }
+    .log .err { color: #ef4444; }
+    .log .wrk { color: #6366f1; }
+    .thinking { background: #1a1a24; padding: 8px 12px; margin: 8px 0; font-size: 11px; color: #6b6b73; }
+    .thinking .line { padding: 2px 0; }
+    .thinking .line::before { content: "> "; color: #6366f1; }
+    .attached { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: #1a1a24; border-radius: 2px; font-size: 10px; color: #94949c; }
+    .chip .x { cursor: pointer; color: #4a4a52; }
+    .chip .x:hover { color: #ef4444; }
+    .input-line { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 12px; }
+    .input-line .prompt { color: #6366f1; }
+    .input-line input { flex: 1; background: transparent; border: none; outline: none; color: #e8e8ec; font-family: 'JetBrains Mono', monospace; font-size: 12px; caret-shape: block; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: #22222e; }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <div class="header">AGENT</div>
+    <div class="border-t"></div>
+    <div class="goal">GOAL: build saas dashboard with auth, billing, analytics</div>
+    <div class="border-t"></div>
+    <div class="status-bar">
+      STATUS: <span class="working">working</span> &nbsp;&nbsp; PROGRESS: 34% &nbsp;&nbsp; TASKS: 4/12 &nbsp;&nbsp; TIME: 02:14:00
+    </div>
+    <div class="border-t"></div>
+    <div style="padding: 6px 0; display: flex;">
+      <span class="btn">Pause</span>
+      <span class="btn">Stop</span>
+      <span class="btn">Checkpoint</span>
+      <span class="btn">Log</span>
+      <span class="btn btn-auto">Auto: ON</span>
+    </div>
+    <div class="border-t"></div>
+    <div class="log" style="padding: 8px 0;">
+      <div><span class="ts">14:32:05</span> <span class="inf">[INF]</span> starting task: build dashboard layout component</div>
+      <div><span class="ts">14:32:08</span> <span class="inf">[INF]</span> reading patterns from memory ctx:react-hooks</div>
+      <div><span class="ts">14:32:12</span> <span class="ok">[OK]</span> found 3 relevant patterns</div>
+      <div><span class="ts">14:32:15</span> <span class="inf">[INF]</span> creating DashboardLayout.tsx</div>
+      <div><span class="ts">14:32:18</span> <span class="inf">[INF]</span> writing component with sidebar + main content grid</div>
+      <div><span class="ts">14:32:22</span> <span class="ok">[OK]</span> file written: src/components/DashboardLayout.tsx (2.4KB)</div>
+      <div><span class="ts">14:32:25</span> <span class="inf">[INF]</span> task complete: build dashboard layout component</div>
+      <div><span class="ts">14:32:25</span> <span class="inf">[INF]</span> starting task: implement authentication flow</div>
+      <div><span class="ts">14:32:28</span> <span class="inf">[INF]</span> reading patterns from memory ctx:auth-flow</div>
+      <div><span class="ts">14:32:32</span> <span class="wrk">[WRK]</span> analyzing JWT vs session-based approach...</div>
+    </div>
+    <div class="border-t"></div>
+    <div class="header" style="margin-top: 4px;">THINKING</div>
+    <div class="thinking">
+      <div class="line">analyzing authentication requirements</div>
+      <div class="line">considering JWT vs session-based approach</div>
+      <div class="line">selected: JWT with 15min expiry (matches memory pattern)</div>
+      <div class="line">reading previous auth implementation from episodic memory</div>
+    </div>
+    <div class="border-t"></div>
+    <div class="header" style="margin-top: 4px;">ATTACHED</div>
+    <div class="attached">
+      <div class="chip">src/components/LoginForm.tsx <span class="x">&times;</span></div>
+      <div class="chip">src/types/auth.ts <span class="x">&times;</span></div>
+    </div>
+    <div class="border-t"></div>
+    <div class="input-line">
+      <span class="prompt">&gt;</span>
+      <input type="text" value="@LoginForm add validation using email regex" autofocus>
+    </div>
+  </div>
+</body>
+</html>

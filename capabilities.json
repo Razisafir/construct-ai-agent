@@ -1,0 +1,19 @@
+{
+  "code": 200,
+  "data": {
+    "description": "",
+    "html": "<html><head><meta name=\"color-scheme\" content=\"light dark\"></head><body><pre style=\"word-wrap: break-word; white-space: pre-wrap;\">[\n  {\n    \"name\": \"default.json\",\n    \"path\": \"src/main/capabilities/default.json\",\n    \"sha\": \"2775c3dbb8d6f2d65b808e761008430df0ae0e6e\",\n    \"size\": 762,\n    \"url\": \"https://api.github.com/repos/Razisafir/construct-ai-agent/contents/src/main/capabilities/default.json?ref=main\",\n    \"html_url\": \"https://github.com/Razisafir/construct-ai-agent/blob/main/src/main/capabilities/default.json\",\n    \"git_url\": \"https://api.github.com/repos/Razisafir/construct-ai-agent/git/blobs/2775c3dbb8d6f2d65b808e761008430df0ae0e6e\",\n    \"download_url\": \"https://raw.githubusercontent.com/Razisafir/construct-ai-agent/main/src/main/capabilities/default.json\",\n    \"type\": \"file\",\n    \"_links\": {\n      \"self\": \"https://api.github.com/repos/Razisafir/construct-ai-agent/contents/src/main/capabilities/default.json?ref=main\",\n      \"git\": \"https://api.github.com/repos/Razisafir/construct-ai-agent/git/blobs/2775c3dbb8d6f2d65b808e761008430df0ae0e6e\",\n      \"html\": \"https://github.com/Razisafir/construct-ai-agent/blob/main/src/main/capabilities/default.json\"\n    }\n  }\n]\n</pre></body></html>",
+    "publishedTime": "Fri, 29 May 2026 11:01:52 GMT",
+    "title": "",
+    "url": "https://api.github.com/repos/Razisafir/construct-ai-agent/contents/src/main/capabilities",
+    "usage": {
+      "tokens": 386
+    }
+  },
+  "meta": {
+    "usage": {
+      "tokens": 386
+    }
+  },
+  "status": 20000
+}
