@@ -67,7 +67,7 @@ pub fn setup_tray<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<dyn std::err
 
     let _tray = TrayIconBuilder::with_id("main")
         .icon(default_icon)
-        .tooltip("Construct AI Agent")
+        .tooltip("CONSTRUCT IDE")
         .menu(&menu)
         .show_menu_on_left_click(false) // Use left-click for window toggle, not menu
         .on_tray_icon_event(|tray, event| {

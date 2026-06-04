@@ -162,7 +162,7 @@ export function TerminalPanel() {
     }
 
     // Fallback: web mode (no Tauri) — show a demo terminal
-    term.writeln("\x1b[36mConstruct IDE — Web Mode\x1b[0m");
+    term.writeln("\x1b[36mCONSTRUCT IDE — Web Mode\x1b[0m");
     term.writeln("\x1b[90mTerminal requires Tauri runtime for PTY support.\x1b[0m");
     term.writeln("\x1b[90mRun 'cargo tauri dev' for a real terminal.\x1b[0m\r\n");
     term.write("\x1b[32m$ \x1b[0m");

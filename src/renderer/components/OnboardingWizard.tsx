@@ -350,7 +350,7 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
             )}
             {step === 5 && (
               <button className="px-5 py-2.5 text-[10px] font-semibold uppercase tracking-wider font-mono border-none rounded-sm cursor-pointer" style={{ background: "var(--c-accent)", color: "var(--c-base)" }} onClick={onComplete}>
-                {llmConnected ? "Launch Construct" : "Continue in Demo Mode"}
+                {llmConnected ? "Launch CONSTRUCT IDE" : "Continue in Demo Mode"}
               </button>
             )}
           </div>

@@ -114,7 +114,7 @@ pub fn build_menu<R: Runtime>(handle: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let help_docs = MenuItem::with_id(handle, "help:documentation", "Documentation", true, None::<&str>)?;
     let help_shortcuts = MenuItem::with_id(handle, "help:shortcuts", "Keyboard Shortcuts", true, None::<&str>)?;
     let help_separator = PredefinedMenuItem::separator(handle)?;
-    let help_about = MenuItem::with_id(handle, "help:about", "About Construct", true, None::<&str>)?;
+    let help_about = MenuItem::with_id(handle, "help:about", "About CONSTRUCT IDE", true, None::<&str>)?;
 
     let help_menu = Submenu::with_items(
         handle,

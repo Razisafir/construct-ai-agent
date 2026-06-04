@@ -127,7 +127,7 @@ function SplashScreen({ onReady }: { onReady: () => void }) {
       {/* Title */}
       <div className="text-center">
         <div className="text-lg font-bold tracking-tight text-text-primary font-sans">
-          CONSTRUCT
+          CONSTRUCT IDE
         </div>
         <div className="text-xs text-text-secondary mt-1 tracking-wider font-mono">
           memory-first AI agent

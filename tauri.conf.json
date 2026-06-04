@@ -1,13 +1,13 @@
 {
-  "$schema": "../../node_modules/@tauri-apps/cli/schema.json",
+  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
   "productName": "Construct",
   "version": "0.1.0",
   "identifier": "com.construct.ai",
   "build": {
     "frontendDist": "../../dist",
     "devUrl": "http://localhost:5173",
-    "beforeDevCommand": "npm run dev --prefix ../..",
-    "beforeBuildCommand": ""
+    "beforeDevCommand": "cd ../.. && npm run dev",
+    "beforeBuildCommand": "cd ../.. && npm run build"
   },
   "app": {
     "withGlobalTauri": true,
@@ -24,11 +24,57 @@
         "decorations": true,
         "transparent": false,
         "focus": true,
-        "visible": true
+        "visible": false
       }
     ],
     "security": {
       "csp": "default-src 'self'; connect-src 'self' http://127.0.0.1:* http://localhost:* https://api.github.com https://*.openai.com https://*.anthropic.com https://*.googleapis.com https://api.construct.ai https://github.com https://*.githubusercontent.com; img-src 'self' data: https:; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "msi",
+      "nsis",
+      "dmg",
+      "deb",
+      "appimage",
+      "rpm"
+    ],
+    "identifier": "com.construct.ai",
+    "icon": [
+      "icons/icon.ico",
+      "icons/icon.icns",
+      "icons/icon.png",
+      "icons/icon-32x32.png",
+      "icons/icon-128x128.png",
+      "icons/icon-512x512.png"
+    ],
+    "externalBin": [
+      "bin/agent-backend"
+    ],
+    "copyright": "2026 Construct AI Inc. All Rights Reserved.",
+    "category": "DeveloperTool",
+    "shortDescription": "CONSTRUCT IDE \u2014 AI coding agent that never forgets",
+    "longDescription": "CONSTRUCT IDE \u2014 Autonomous AI coding assistant with persistent memory, multi-agent teams, and 24/7 background execution.",
+    "linux": {
+      "deb": {
+        "depends": [
+          "libgtk-3-0t64",
+          "libwebkit2gtk-4.1-0",
+          "libayatana-appindicator3-1"
+        ]
+      }
+    },
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "installMode": "both"
+      }
+    },
+    "macOS": {
+      "frameworks": [],
+      "minimumSystemVersion": "10.13"
     }
   },
   "plugins": {
@@ -39,36 +85,6 @@
       ],
       "dialog": true,
       "pubkey": "x7rd+A/oSTUixP8A2n4Pe8llDov5Aaj4/QxwdBtpnuQ="
-    }
-  },
-  "bundle": {
-    "targets": ["msi", "nsis", "dmg", "deb", "appimage", "rpm"],
-    "icon": [
-      "icons/icon.ico",
-      "icons/icon.icns",
-      "icons/icon.png",
-      "icons/icon-32x32.png",
-      "icons/icon-128x128.png",
-      "icons/icon-512x512.png"
-    ],
-    "externalBin": ["bin/agent-backend"],
-    "copyright": "2026 Construct AI Inc. All Rights Reserved.",
-    "category": "DeveloperTool",
-    "shortDescription": "CONSTRUCT IDE — AI coding agent that never forgets",
-    "longDescription": "CONSTRUCT IDE — Autonomous AI coding assistant with persistent memory, multi-agent teams, and 24/7 background execution.",
-    "linux": {
-      "deb": {
-        "depends": ["libgtk-3-0t64", "libwebkit2gtk-4.1-0", "libayatana-appindicator3-1"]
-      }
-    },
-    "windows": {
-      "nsis": {
-        "installMode": "both"
-      }
-    },
-    "macOS": {
-      "frameworks": [],
-      "minimumSystemVersion": "10.13"
     }
   }
 }

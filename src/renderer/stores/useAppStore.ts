@@ -40,7 +40,7 @@ interface AppState {
   toggleRightSidebar: () => void;
   toggleRightPanel: () => void;
 
-  // Panel tab (bottom panel — VS Code standard: Problems, Output, Debug Console, Terminal, Ports)
+  // Panel tab (bottom panel — Industry-standard panel tabs: Problems, Output, Debug Console, Terminal, Ports)
   panelTab: string;
   setPanelTab: (tab: string) => void;
 

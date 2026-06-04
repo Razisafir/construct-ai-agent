@@ -44,20 +44,20 @@ export async function notify(title: string, body: string): Promise<void> {
 
 /** Convenience: info-level notification */
 export async function info(body: string): Promise<void> {
-  return notify("Construct", body);
+  return notify("CONSTRUCT IDE", body);
 }
 
 /** Convenience: success notification */
 export async function success(body: string): Promise<void> {
-  return notify("Construct", body);
+  return notify("CONSTRUCT IDE", body);
 }
 
 /** Convenience: error notification */
 export async function error(body: string): Promise<void> {
-  return notify("Construct Error", body);
+  return notify("CONSTRUCT IDE Error", body);
 }
 
 /** Convenience: agent activity notification */
 export async function agent(body: string): Promise<void> {
-  return notify("Construct Agent", body);
+  return notify("CONSTRUCT IDE Agent", body);
 }

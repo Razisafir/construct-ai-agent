@@ -51,7 +51,7 @@ function LoadingScreen() {
           animation: "spin 1s linear infinite",
         }}
       />
-      <span style={{ fontSize: "11px", color: C.t3 }}>Loading Construct...</span>
+      <span style={{ fontSize: "11px", color: C.t3 }}>Loading CONSTRUCT IDE...</span>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );

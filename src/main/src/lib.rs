@@ -211,7 +211,7 @@ async fn check_for_updates(app_handle: tauri::AppHandle) {
 /// Simple greeting command for frontend-Rust communication testing.
 #[tauri::command]
 fn greet(name: &str) -> String {
-    format!("Hello, {}! Welcome to Construct.", name)
+    format!("Hello, {}! Welcome to CONSTRUCT IDE.", name)
 }
 
 /// Returns the current application version from Cargo.toml.

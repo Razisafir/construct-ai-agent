@@ -73,6 +73,8 @@ jobs:
             libwebkit2gtk-4.1-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
+            libudev-dev \
+            libclang-dev \
             patchelf \
             pkg-config
 
@@ -323,6 +325,8 @@ jobs:
             libwebkit2gtk-4.1-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
+            libudev-dev \
+            libclang-dev \
             patchelf \
             pkg-config
 
