@@ -21,6 +21,15 @@ Notification endpoints (new):
     POST /notifications         — Send a test notification
     GET  /notifications/recent  — Get recent notifications
 
+Ghidra Binary Analysis endpoints (Phase 3):
+    POST /api/tools/ghidra/analyze          — Start async binary analysis
+    GET  /api/tools/ghidra/status/{id}      — Get analysis progress
+    GET  /api/tools/ghidra/results/{id}     — Get full analysis results
+    POST /api/tools/ghidra/decompile        — Decompile a function
+    GET  /api/tools/ghidra/status           — Check MCP server availability
+    GET  /api/tools/ghidra/analyses         — List all analyses
+    WS   /ws/ghidra/{id}                    — Stream analysis progress
+
 Run with:
     uvicorn app:app --host 127.0.0.1 --port 8000 --reload
 """
@@ -36,7 +45,7 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Dict, List, Optional, Any
 
-from fastapi import FastAPI, HTTPException, Path, Request
+from fastapi import FastAPI, HTTPException, Path, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
@@ -153,6 +162,10 @@ _safety_monitor: Optional[Any] = None
 _resource_monitor: Optional[Any] = None
 _notification_service: Optional[Any] = None
 
+# Ghidra MCP client (Phase 3 — binary analysis)
+_ghidra_client: Optional[Any] = None
+_ghidra_analyses: Dict[str, Any] = {}  # analysis_id -> result dict
+
 
 # ---------------------------------------------------------------------------
 # Lifespan — warm up embedding model + init agent + autonomous services
@@ -233,6 +246,23 @@ async def lifespan(app: FastAPI):
         _resource_monitor.max_memory,
     )
 
+    # Ghidra MCP client (Phase 3 — binary reverse engineering)
+    global _ghidra_client
+    try:
+        from tools.ghidra_mcp_client import GhidraMCPClient
+        _ghidra_client = GhidraMCPClient()
+        connected = await _ghidra_client.connect()
+        if connected:
+            logger.info("Ghidra MCP server connected — binary analysis available")
+        else:
+            logger.info(
+                "Ghidra MCP server not running — binary analysis will use fallback. "
+                "Start with: docker compose up ghidra-mcp"
+            )
+    except Exception as exc:
+        logger.warning("Ghidra MCP client init failed: %s — analysis unavailable", exc)
+        _ghidra_client = None
+
     yield
 
     # Shutdown
@@ -258,6 +288,15 @@ async def lifespan(app: FastAPI):
             asyncio.create_task(_llm_service.close())
         except Exception:
             pass
+
+    # Shutdown Ghidra MCP client
+    logger.info("Closing Ghidra MCP client...")
+    if _ghidra_client is not None:
+        try:
+            await _ghidra_client.disconnect()
+        except Exception:
+            pass
+
     logger.info("Construct Agent API shut down.")
 
 
@@ -3196,3 +3235,324 @@ async def disconnect_mcp_server(server_name: str) -> dict:
     except Exception as exc:
         logger.error("MCP disconnect failed: %s", exc)
         return {"disconnected": False, "error": str(exc)}
+
+
+# ===========================================================================
+# Ghidra Binary Analysis Endpoints (Phase 3)
+# ===========================================================================
+
+class GhidraAnalyzeRequest(BaseModel):
+    binary_path: str = Field(..., description="Absolute path to the binary file to analyze")
+    workspace_id: Optional[str] = Field(None, description="Optional workspace ID for result association")
+
+
+class GhidraAnalyzeResponse(BaseModel):
+    analysis_id: str
+    status: str  # "started", "failed"
+    message: str
+
+
+class GhidraStatusResponse(BaseModel):
+    analysis_id: str
+    status: str  # "in_progress", "complete", "failed"
+    progress_percent: int
+    current_phase: str
+
+
+class GhidraDecompileRequest(BaseModel):
+    analysis_id: str = Field(..., description="Analysis ID from a previous analyze call")
+    function_address: str = Field(..., description="Address or name of the function to decompile")
+
+
+class GhidraDecompileResponse(BaseModel):
+    pseudocode: str
+    language: str = "C"
+    function_name: Optional[str] = None
+    address: Optional[str] = None
+    signature: Optional[str] = None
+
+
+@app.get("/api/tools/ghidra/status")
+async def ghidra_server_status() -> dict:
+    """Check if the Ghidra MCP server is available."""
+    if _ghidra_client is None:
+        return {"available": False, "reason": "Client not initialized"}
+
+    connected = _ghidra_client.is_connected()
+    # Try reconnecting if not connected
+    if not connected:
+        try:
+            connected = await _ghidra_client.connect()
+        except Exception:
+            pass
+
+    return {
+        "available": connected,
+        "server_url": _ghidra_client.base_url if _ghidra_client else None,
+        "server_info": _ghidra_client._server_info if _ghidra_client else {},
+    }
+
+
+@app.post("/api/tools/ghidra/analyze", response_model=GhidraAnalyzeResponse)
+async def ghidra_analyze(req: GhidraAnalyzeRequest) -> dict:
+    """Start an async Ghidra binary analysis.
+
+    Returns immediately with an analysis_id. Progress is streamed via
+    WebSocket at /ws/ghidra/{analysis_id}. Results can be fetched
+    from /api/tools/ghidra/results/{analysis_id} once complete.
+    """
+    import uuid
+
+    analysis_id = str(uuid.uuid4())[:8]
+
+    # Validate binary path
+    import os
+    if not os.path.isfile(req.binary_path):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Binary file not found: {req.binary_path}",
+        )
+
+    # Store initial state
+    _ghidra_analyses[analysis_id] = {
+        "analysis_id": analysis_id,
+        "binary_path": req.binary_path,
+        "workspace_id": req.workspace_id,
+        "status": "started",
+        "progress_percent": 0,
+        "current_phase": "queued",
+        "result": None,
+        "error": None,
+        "started_at": time.time(),
+    }
+
+    # Start background analysis task
+    asyncio.create_task(
+        _run_ghidra_analysis(
+            analysis_id=analysis_id,
+            binary_path=req.binary_path,
+            workspace_id=req.workspace_id,
+        )
+    )
+
+    logger.info("Ghidra analysis started: %s for %s", analysis_id, req.binary_path)
+
+    return {
+        "analysis_id": analysis_id,
+        "status": "started",
+        "message": f"Analysis started for {os.path.basename(req.binary_path)}",
+    }
+
+
+async def _run_ghidra_analysis(
+    analysis_id: str, binary_path: str, workspace_id: Optional[str] = None
+) -> None:
+    """Background task that runs Ghidra analysis and stores results."""
+    try:
+        if _ghidra_client is None:
+            _ghidra_analyses[analysis_id].update({
+                "status": "failed",
+                "error": "Ghidra MCP client not available",
+                "current_phase": "failed",
+            })
+            return
+
+        async for event in _ghidra_client.analyze_binary(binary_path, workspace_id):
+            if event["type"] == "progress":
+                _ghidra_analyses[analysis_id].update({
+                    "status": "in_progress",
+                    "progress_percent": event["percent"],
+                    "current_phase": event["phase"],
+                })
+            elif event["type"] == "complete":
+                result = event["result"]
+                _ghidra_analyses[analysis_id].update({
+                    "status": "complete",
+                    "progress_percent": 100,
+                    "current_phase": "complete",
+                    "result": result,
+                })
+
+    except Exception as exc:
+        logger.error("Ghidra analysis %s failed: %s", analysis_id, exc)
+        _ghidra_analyses[analysis_id].update({
+            "status": "failed",
+            "error": str(exc),
+            "current_phase": "failed",
+        })
+
+
+@app.get("/api/tools/ghidra/status/{analysis_id}", response_model=GhidraStatusResponse)
+async def ghidra_analysis_status(analysis_id: str = Path(...)) -> dict:
+    """Get the status of an in-progress Ghidra analysis."""
+    if analysis_id not in _ghidra_analyses:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+
+    entry = _ghidra_analyses[analysis_id]
+    return {
+        "analysis_id": analysis_id,
+        "status": entry["status"],
+        "progress_percent": entry["progress_percent"],
+        "current_phase": entry["current_phase"],
+    }
+
+
+@app.get("/api/tools/ghidra/results/{analysis_id}")
+async def ghidra_analysis_results(analysis_id: str = Path(...)) -> dict:
+    """Get the full results of a completed Ghidra analysis."""
+    if analysis_id not in _ghidra_analyses:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+
+    entry = _ghidra_analyses[analysis_id]
+
+    if entry["status"] == "in_progress":
+        raise HTTPException(
+            status_code=409,
+            detail=f"Analysis still in progress ({entry['progress_percent']}% — {entry['current_phase']})",
+        )
+
+    if entry["status"] == "failed":
+        return {
+            "analysis_id": analysis_id,
+            "status": "failed",
+            "error": entry["error"],
+            "result": None,
+        }
+
+    return {
+        "analysis_id": analysis_id,
+        "status": "complete",
+        "result": entry["result"],
+    }
+
+
+@app.post("/api/tools/ghidra/decompile", response_model=GhidraDecompileResponse)
+async def ghidra_decompile(req: GhidraDecompileRequest) -> dict:
+    """Decompile a specific function from a previously analyzed binary."""
+    if _ghidra_client is None or not _ghidra_client.is_connected():
+        raise HTTPException(
+            status_code=503,
+            detail="Ghidra MCP server not available",
+        )
+
+    if req.analysis_id not in _ghidra_analyses:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+
+    entry = _ghidra_analyses[req.analysis_id]
+    if entry["status"] != "complete":
+        raise HTTPException(
+            status_code=409,
+            detail="Analysis must be complete before decompiling",
+        )
+
+    binary_path = entry["binary_path"]
+
+    # Check if already decompiled
+    result = entry.get("result", {})
+    for decomp in result.get("decompiled_functions", []):
+        if decomp.get("function_name") == req.function_address or decomp.get("address") == req.function_address:
+            return {
+                "pseudocode": decomp.get("c_code", ""),
+                "language": "C",
+                "function_name": decomp.get("function_name"),
+                "address": decomp.get("address"),
+                "signature": decomp.get("signature"),
+            }
+
+    # Request fresh decompilation
+    pseudocode = await _ghidra_client.decompile_function(binary_path, req.function_address)
+
+    return {
+        "pseudocode": pseudocode,
+        "language": "C",
+        "function_name": req.function_address,
+        "address": None,
+        "signature": None,
+    }
+
+
+@app.websocket("/ws/ghidra/{analysis_id}")
+async def ws_ghidra_progress(websocket: WebSocket, analysis_id: str):
+    """WebSocket endpoint for streaming Ghidra analysis progress.
+
+    Sends real-time progress events as the analysis proceeds:
+    {"type": "progress", "phase": "import", "percent": 5, "message": "..."}
+    {"type": "complete", "result": {...}}
+    {"type": "error", "message": "..."}
+    """
+    await websocket.accept()
+
+    if analysis_id not in _ghidra_analyses:
+        await websocket.send_json({
+            "type": "error",
+            "message": f"Analysis {analysis_id} not found",
+        })
+        await websocket.close()
+        return
+
+    try:
+        last_percent = 0
+        while True:
+            entry = _ghidra_analyses.get(analysis_id)
+            if entry is None:
+                await websocket.send_json({"type": "error", "message": "Analysis lost"})
+                break
+
+            # Send progress update if changed
+            if entry["progress_percent"] != last_percent or entry["status"] != "in_progress":
+                if entry["status"] == "in_progress":
+                    await websocket.send_json({
+                        "type": "progress",
+                        "phase": entry["current_phase"],
+                        "percent": entry["progress_percent"],
+                        "message": f"Phase: {entry['current_phase']} ({entry['progress_percent']}%)",
+                        "analysis_id": analysis_id,
+                    })
+                    last_percent = entry["progress_percent"]
+                elif entry["status"] == "complete":
+                    await websocket.send_json({
+                        "type": "complete",
+                        "result": entry["result"],
+                        "analysis_id": analysis_id,
+                    })
+                    break
+                elif entry["status"] == "failed":
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": entry.get("error", "Analysis failed"),
+                        "analysis_id": analysis_id,
+                    })
+                    break
+
+            await asyncio.sleep(0.2)  # 5 updates/sec
+
+    except WebSocketDisconnect:
+        logger.debug("WebSocket disconnected for Ghidra analysis %s", analysis_id)
+    except Exception as exc:
+        logger.error("WebSocket error for Ghidra analysis %s: %s", analysis_id, exc)
+        try:
+            await websocket.send_json({"type": "error", "message": str(exc)})
+        except Exception:
+            pass
+    finally:
+        try:
+            await websocket.close()
+        except Exception:
+            pass
+
+
+@app.get("/api/tools/ghidra/analyses")
+async def ghidra_list_analyses() -> dict:
+    """List all Ghidra analyses (running and completed)."""
+    analyses = []
+    for aid, entry in _ghidra_analyses.items():
+        analyses.append({
+            "analysis_id": aid,
+            "binary_path": entry["binary_path"],
+            "status": entry["status"],
+            "progress_percent": entry["progress_percent"],
+            "current_phase": entry["current_phase"],
+            "started_at": entry.get("started_at"),
+            "error": entry.get("error"),
+        })
+    return {"analyses": analyses, "total": len(analyses)}

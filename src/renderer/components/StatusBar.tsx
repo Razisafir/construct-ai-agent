@@ -131,9 +131,17 @@ function StatusBar() {
       <div className="flex items-center gap-6">
         {/* Security mode indicator */}
         {agentMode === "security" && (
-          <span className="flex items-center gap-1.5 text-emerald-400 cursor-default" title="Security mode active — Nmap scanning available">
+          <span className="flex items-center gap-1.5 text-emerald-400 cursor-default" title="Security mode active — Nmap scanning & Ghidra binary analysis available">
             <span className="material-symbols-outlined text-[12px]">shield</span>
             <span className="text-[10px] font-mono uppercase tracking-wider font-semibold">Security</span>
+          </span>
+        )}
+
+        {/* Ghidra RE indicator */}
+        {agentMode === "security" && (
+          <span className="flex items-center gap-1.5 text-purple-400 cursor-default" title="Ghidra binary analysis available">
+            <span className="material-symbols-outlined text-[12px]">psychology</span>
+            <span className="text-[10px] font-mono uppercase tracking-wider font-semibold">RE</span>
           </span>
         )}
 
