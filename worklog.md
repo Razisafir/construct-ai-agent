@@ -83,3 +83,47 @@ Work Log:
 Stage Summary:
 - VERIFICATION_REPORT.md pushed to main
 - Phase 2 readiness: CONDITIONAL PASS — proceed with runtime verification caveat
+
+---
+Task ID: Phase 2
+Agent: Main Agent
+Task: Phase 2 — Security Tool Integration (Nmap + Ghidra MCP Foundation)
+
+Work Log:
+- Explored construct-ai-agent repository structure (Tauri v2 + React + TypeScript + Rust + Python FastAPI)
+- Created agent-backend/tools/nmap_tool.py (580 lines) — Full Nmap tool implementation with:
+  - Async nmap scanning with XML output parsing
+  - Target validation (blocks localhost, validates CIDR/hostnames, blocks multicast)
+  - Port validation (regex-based, blocks shell injection)
+  - Options whitelist (40+ allowed flags, 14 blocked evasion flags)
+  - Rate limiting (1 concurrent scan, 10/hour, 5s cooldown)
+  - Audit logging (SQLite-based audit_log table)
+- Added 3 nmap API endpoints to app.py:
+  - POST /api/tools/nmap — Run scan with security validation
+  - GET /api/tools/nmap/audit — Get scan audit log
+  - GET /api/tools/nmap/status — Check nmap availability + rate limits
+- Registered nmap_scan tool in tools/__init__.py (40 total tools now)
+- Updated core/modes.py SECURITY mode:
+  - New system prompt with CONSTRUCT Security Agent instructions
+  - Added nmap_scan, decompile_function, compare_binaries to available tools
+  - nmap_scan requires human approval
+- Created src/renderer/components/SecurityPanel.tsx (530 lines):
+  - NmapScanForm, NmapResultsTable, NmapScanHistory, NmapProgressIndicator, NmapAuditLog
+  - 6 scan presets, JSON export, color-coded port states
+- Added Security tab to Panel.tsx (shield icon)
+- Added security mode indicator to StatusBar.tsx
+- Created docker/ghidra-mcp/ (Dockerfile, entrypoint.sh, docker-compose.yml)
+- Created root docker-compose.yml
+- All Python tests PASSED (imports, validation, rate limiting, audit logging)
+- TypeScript compilation: 0 errors
+- Committed as 499556f on feat/phase2-security-tools branch
+- Git push to GitHub failed (network timeout)
+
+Stage Summary:
+- 11 files changed, 2500 insertions
+- Nmap backend: FULLY IMPLEMENTED, unit tested (not E2E tested — no nmap binary)
+- Nmap React UI: FULLY IMPLEMENTED
+- Agent security mode: FULLY IMPLEMENTED with updated prompt and tools
+- Ghidra Docker: SETUP ONLY (Dockerfile created, not built — no Docker runtime)
+- Security blocklist: FULLY IMPLEMENTED and tested
+- Session report: /home/z/my-project/download/PHASE2_SESSION_REPORT.md
