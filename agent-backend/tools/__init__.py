@@ -40,6 +40,7 @@ from tools.ghidra_tool import GhidraTool
 from tools.browser_tool import BrowserTool
 from tools.code_search_tool import CodeSearchTool
 from tools.database_tool import DatabaseTool
+from tools.nmap_tool import NmapTool
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +54,7 @@ _ghidra_instance: Optional[GhidraTool] = None
 _browser_instance: Optional[BrowserTool] = None
 _code_search_instance: Optional[CodeSearchTool] = None
 _database_instance: Optional[DatabaseTool] = None
+_nmap_instance: Optional[NmapTool] = None
 
 
 def _get_markitdown() -> MarkItDownTool:
@@ -93,6 +95,14 @@ def _get_database() -> DatabaseTool:
     if _database_instance is None:
         _database_instance = DatabaseTool()
     return _database_instance
+
+
+def _get_nmap() -> NmapTool:
+    """Return (creating if needed) the shared NmapTool instance."""
+    global _nmap_instance
+    if _nmap_instance is None:
+        _nmap_instance = NmapTool()
+    return _nmap_instance
 
 
 # -- MarkItDown tool wrappers -----------------------------------------------
@@ -327,6 +337,56 @@ def db_disconnect() -> Dict[str, Any]:
     tool = _get_database()
     tool.close()
     return {"success": True, "message": "Disconnected"}
+
+
+# -- Nmap tool wrappers ----------------------------------------------------
+
+def nmap_scan(
+    target: str,
+    ports: Optional[str] = None,
+    options: Optional[str] = None,
+    workspace_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Run an nmap network scan to discover hosts and open ports.
+
+    Scans the specified target (IP, CIDR, or hostname) and returns
+    structured results including discovered hosts, open ports, services,
+    and OS detection (if -O flag used). Requires nmap to be installed.
+    """
+    import asyncio
+    tool = _get_nmap()
+    if not tool.is_available():
+        return {
+            "success": False,
+            "error": (
+                "Nmap is not installed. Install with: "
+                "sudo apt install nmap (Ubuntu/Debian) or brew install nmap (macOS)"
+            ),
+        }
+    try:
+        loop = asyncio.get_running_loop()
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(
+                asyncio.run,
+                tool.scan(
+                    target=target,
+                    ports=ports,
+                    options=options,
+                    workspace_id=workspace_id,
+                ),
+            )
+            result = future.result()
+    except RuntimeError:
+        result = asyncio.run(
+            tool.scan(
+                target=target,
+                ports=ports,
+                options=options,
+                workspace_id=workspace_id,
+            )
+        )
+    return result.to_dict()
 
 
 # ---------------------------------------------------------------------------
@@ -1362,6 +1422,41 @@ TOOL_DEFINITIONS: List[Dict[str, Any]] = [
             },
         },
     },
+    # -- Nmap security scanning tools ----------------------------------------
+    {
+        "type": "function",
+        "function": {
+            "name": "nmap_scan",
+            "description": (
+                "Run an nmap network scan to discover hosts and open ports. "
+                "Returns structured results including discovered hosts, open ports, "
+                "running services, and OS detection. Requires nmap to be installed. "
+                "Scans are rate-limited and validated for security."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "target": {
+                        "type": "string",
+                        "description": "IP address (192.168.1.1), CIDR range (192.168.1.0/24), or hostname to scan",
+                    },
+                    "ports": {
+                        "type": "string",
+                        "description": "Port specification (e.g., '80,443' or '1-1000'). Default: top 1000 ports",
+                    },
+                    "options": {
+                        "type": "string",
+                        "description": "Additional nmap flags (e.g., '-sV' for version detection, '-O' for OS detection)",
+                    },
+                    "workspace_id": {
+                        "type": "string",
+                        "description": "Optional workspace ID for result association",
+                    },
+                },
+                "required": ["target"],
+            },
+        },
+    },
 ]
 
 # ---------------------------------------------------------------------------
@@ -1417,6 +1512,8 @@ _TOOL_FUNCTIONS: Dict[str, Callable] = {
     "db_list_tables": db_list_tables,
     "db_get_schema": db_get_schema,
     "db_disconnect": db_disconnect,
+    # Nmap tools
+    "nmap_scan": nmap_scan,
 }
 
 # ---------------------------------------------------------------------------

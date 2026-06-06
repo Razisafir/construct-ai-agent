@@ -5,6 +5,10 @@ const TerminalPanel = lazy(() =>
   import("./TerminalPanel").then((m) => ({ default: m.TerminalPanel ?? m.default ?? m.TerminalPanel }))
 );
 
+const SecurityPanel = lazy(() =>
+  import("./SecurityPanel").then((m) => ({ default: m.default }))
+);
+
 interface Tab {
   id: string;
   icon: string;
@@ -16,12 +20,12 @@ function Panel() {
   const panelTab = useAppStore((s) => s.panelTab);
   const setPanelTab = useAppStore((s) => s.setPanelTab);
   const togglePanel = useAppStore((s) => s.togglePanel);
-
   const tabs: Tab[] = [
     { id: "problems", icon: "warning", label: "Problems" },
     { id: "output", icon: "output", label: "Output" },
     { id: "debug-console", icon: "bug_report", label: "Debug Console" },
     { id: "terminal", icon: "terminal", label: "Terminal" },
+    { id: "security", icon: "shield", label: "Security" },
     { id: "ports", icon: "lan", label: "Ports" },
   ];
 
@@ -45,6 +49,18 @@ function Panel() {
             }
           >
             <TerminalPanel />
+          </Suspense>
+        );
+      case "security":
+        return (
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center h-full font-mono text-[11px] text-text-secondary">
+                loading security panel...
+              </div>
+            }
+          >
+            <SecurityPanel />
           </Suspense>
         );
       case "problems": return renderPlaceholder("Problems", "warning");

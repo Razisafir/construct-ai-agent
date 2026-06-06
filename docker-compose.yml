@@ -1,0 +1,37 @@
+version: "3.8"
+
+# CONSTRUCT AI Agent — Docker Compose
+#
+# Multi-service Docker composition for CONSTRUCT AI Agent.
+# Currently includes Ghidra MCP server for binary analysis (Phase 3).
+#
+# Usage:
+#   docker compose up -d          # Start all services
+#   docker compose up ghidra-mcp  # Start only Ghidra MCP
+#   docker compose down           # Stop all services
+
+services:
+  ghidra-mcp:
+    build: ./docker/ghidra-mcp
+    container_name: construct-ghidra-mcp
+    ports:
+      - "8765:8765"
+    volumes:
+      - ./workspace/binaries:/workspace/binaries:ro
+    environment:
+      - GHIDRA_VERSION=11.2.1
+      - GHIDRA_INSTALL_DIR=/opt/ghidra
+      - GHIDRA_MAX_HEAP=4G
+    mem_limit: 6g
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8765/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

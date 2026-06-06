@@ -31,6 +31,7 @@ function StatusBar() {
   const skills = useAppStore((s) => s.skills);
   const activeSkillCount = skills.filter((s) => s.installed).length;
   const cursorPosition = useAppStore((s) => s.cursorPosition);
+  const agentMode = useAppStore((s) => s.agentMode);
 
   const [lspStatus, setLspStatus] = useState<LSPStatus | null>(null);
   const [completionStats, setCompletionStats] = useState<CompletionStats | null>(null);
@@ -128,6 +129,14 @@ function StatusBar() {
 
       {/* Right section */}
       <div className="flex items-center gap-6">
+        {/* Security mode indicator */}
+        {agentMode === "security" && (
+          <span className="flex items-center gap-1.5 text-emerald-400 cursor-default" title="Security mode active — Nmap scanning available">
+            <span className="material-symbols-outlined text-[12px]">shield</span>
+            <span className="text-[10px] font-mono uppercase tracking-wider font-semibold">Security</span>
+          </span>
+        )}
+
         {/* AI Completions indicator */}
         {aiAvailable ? (
           <span className="flex items-center gap-1.5 text-[#00E5FF] cursor-default" title={`AI completions active · ${completionStats?.successful ?? 0} suggestions · avg ${Math.round(completionStats?.avg_latency_ms ?? 0)}ms`}>

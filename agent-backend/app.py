@@ -1194,6 +1194,103 @@ async def execute_tool(req: ToolExecuteRequest) -> dict:
 
 
 # ===========================================================================
+# Security Tool Endpoints — Nmap
+# ===========================================================================
+
+class NmapScanRequest(BaseModel):
+    target: str = Field(..., description="IP address, CIDR range, or hostname to scan")
+    ports: Optional[str] = Field(None, description="Port specification (e.g., '80,443' or '1-1000')")
+    options: Optional[str] = Field(None, description="Additional nmap flags (e.g., '-sV -O')")
+    workspace_id: Optional[str] = Field(None, description="Workspace ID for result association")
+    allow_localhost: bool = Field(False, description="Allow scanning localhost/127.0.0.1")
+    allow_private: bool = Field(True, description="Allow scanning RFC 1918 private ranges")
+    timeout: int = Field(120, ge=10, le=300, description="Maximum scan duration in seconds")
+
+
+class NmapScanResponse(BaseModel):
+    scan_id: str
+    target: str
+    command: str
+    start_time: str
+    end_time: Optional[str] = None
+    status: str  # running, completed, failed
+    hosts: list
+    raw_xml: Optional[str] = None
+    error: Optional[str] = None
+    elapsed: float = 0.0
+    hosts_up: int = 0
+    hosts_down: int = 0
+
+
+class NmapAuditLogResponse(BaseModel):
+    entries: List[dict]
+    total: int
+
+
+@app.post("/api/tools/nmap", response_model=NmapScanResponse)
+async def run_nmap_scan(req: NmapScanRequest) -> dict:
+    """
+    Run an nmap network scan with security validation.
+
+    Validates the target against a blocklist (localhost blocked by default,
+    private ranges require confirmation), enforces rate limiting (1 concurrent
+    scan, 10 per hour), and logs all operations to an audit database.
+
+    Requires nmap to be installed on the system.
+    """
+    from tools.nmap_tool import NmapTool
+
+    tool = NmapTool()
+    if not tool.is_available():
+        raise HTTPException(
+            status_code=503,
+            detail="Nmap is not installed. Install with: sudo apt install nmap",
+        )
+
+    try:
+        result = await tool.scan(
+            target=req.target,
+            ports=req.ports,
+            options=req.options,
+            workspace_id=req.workspace_id,
+            allow_localhost=req.allow_localhost,
+            allow_private=req.allow_private,
+            timeout=req.timeout,
+        )
+        return result.to_dict()
+    except Exception as exc:
+        logger.error("Nmap scan failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/api/tools/nmap/audit", response_model=NmapAuditLogResponse)
+async def get_nmap_audit_log(limit: int = 50) -> dict:
+    """Get recent nmap scan audit log entries."""
+    from tools.nmap_tool import NmapTool
+
+    tool = NmapTool()
+    entries = tool.get_audit_log(limit=limit)
+    return {"entries": entries, "total": len(entries)}
+
+
+@app.get("/api/tools/nmap/status")
+async def get_nmap_status() -> dict:
+    """Get nmap availability and rate limit status."""
+    from tools.nmap_tool import NmapTool
+
+    tool = NmapTool()
+    return {
+        "available": tool.is_available(),
+        "rate_limits": {
+            "max_concurrent": 1,
+            "max_per_hour": 10,
+            "cooldown_seconds": 5,
+            "active_scans": tool._rate_limiter._active_scans,
+        },
+    }
+
+
+# ===========================================================================
 # LLM Endpoints (direct LLM access)
 # ===========================================================================
 

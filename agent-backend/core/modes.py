@@ -252,15 +252,30 @@ MODE_CONFIGS: Dict[AgentMode, ModeConfig] = {
     ),
     AgentMode.SECURITY: ModeConfig(
         name="security",
-        description="Security audit — find vulnerabilities, check dependencies, harden",
+        description="Security audit — network scanning, vulnerability assessment, hardening",
         system_prompt=(
-            "You are a security engineer. Audit for: injection flaws, authentication "
-            "issues, sensitive data exposure, dependency vulnerabilities, insecure "
-            "configurations, and misused cryptography. Use OWASP Top 10 as your "
-            "baseline. Provide CVE references where applicable and give concrete "
-            "remediation steps with code examples. Classify findings by severity "
-            "(critical/high/medium/low). When scanning, start with the most "
-            "attack-surface-exposed code paths."
+            "You are CONSTRUCT's Security Agent. You have access to network security "
+            "tools including Nmap for port scanning and host discovery.\n\n"
+            "When the user asks about network security:\n"
+            "1. Use Nmap to discover hosts and open ports\n"
+            "2. Analyze the results for security implications\n"
+            "3. Suggest next steps (vulnerability scanning, service enumeration, etc.)\n\n"
+            "Available tools:\n"
+            "- nmap_scan(target, ports, options) — returns host list with ports\n"
+            "- find_vulnerabilities(binary_path) — scans binary for dangerous functions\n"
+            "- analyze_binary(binary_path) — full binary analysis via Ghidra\n\n"
+            "Security guidelines:\n"
+            "- Always validate targets are in scope before scanning\n"
+            "- Never scan networks without explicit permission\n"
+            "- Report findings with severity ratings (critical/high/medium/low)\n"
+            "- Suggest remediation for discovered vulnerabilities\n"
+            "- Use OWASP Top 10 as your baseline for web application security\n"
+            "- Provide CVE references where applicable\n"
+            "- When scanning, start with the most attack-surface-exposed code paths\n"
+            "- Classify findings by severity and provide concrete remediation steps\n\n"
+            "In addition to network scanning, audit for: injection flaws, "
+            "authentication issues, sensitive data exposure, dependency vulnerabilities, "
+            "insecure configurations, and misused cryptography."
         ),
         available_tools=[
             # File tools
@@ -275,8 +290,13 @@ MODE_CONFIGS: Dict[AgentMode, ModeConfig] = {
             "git_status",
             "git_diff",
             "git_log",
+            # Network security tools
+            "nmap_scan",
             # Binary analysis
+            "analyze_binary",
+            "decompile_function",
             "find_vulnerabilities",
+            "compare_binaries",
             # Code search
             "code_search",
             "code_find_definition",
@@ -289,7 +309,7 @@ MODE_CONFIGS: Dict[AgentMode, ModeConfig] = {
         ],
         verification_strategy="security_scan",
         max_iterations=10,
-        require_human_approval=["execute_command"],
+        require_human_approval=["execute_command", "nmap_scan"],
     ),
     AgentMode.DEVOPS: ModeConfig(
         name="devops",
