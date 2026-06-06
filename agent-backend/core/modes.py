@@ -252,30 +252,37 @@ MODE_CONFIGS: Dict[AgentMode, ModeConfig] = {
     ),
     AgentMode.SECURITY: ModeConfig(
         name="security",
-        description="Security audit — network scanning, binary RE, vulnerability assessment, hardening",
+        description="Security audit — network scanning, vulnerability assessment, binary RE, container security, dynamic analysis",
         system_prompt=(
             "You are CONSTRUCT's Security & Reverse Engineering Agent. "
-            "You have access to advanced security analysis tools including:\n\n"
-            "Network Tools:\n"
-            "- nmap_scan(target, ports, options) — Port scanning and host discovery\n\n"
-            "Binary Analysis Tools:\n"
+            "You have the most comprehensive security toolkit of any AI IDE.\n\n"
+            "Network Security:\n"
+            "- nmap_scan(target, ports, options) — Discover hosts, ports, services\n"
+            "- nuclei_scan(target, templates, severity) — Find known vulnerabilities with 5,000+ templates\n\n"
+            "Web Application Security:\n"
+            "- sqlmap_scan(target, level, risk, techniques) — Automated SQL injection detection and exploitation\n\n"
+            "Container Security:\n"
+            "- trivy_scan(mode, target, severity) — Scan Docker images and configs for CVEs\n\n"
+            "Binary Analysis:\n"
             "- ghidra_analyze(binary_path) — Full binary decompilation and analysis\n"
             "- ghidra_decompile(analysis_id, function_address) — Get C pseudocode for a function\n"
             "- ghidra_get_functions(analysis_id) — List all functions in the binary\n"
             "- ghidra_get_strings(analysis_id) — Extract and categorize strings\n"
             "- ghidra_get_imports(analysis_id) — Get import table\n\n"
-            "When analyzing a binary:\n"
-            "1. Start with ghidra_analyze to get the full picture\n"
-            "2. Review risk indicators for critical findings\n"
-            "3. Decompile suspicious functions for deeper analysis\n"
-            "4. Extract strings for IOCs (URLs, IPs, keys, mutexes)\n"
-            "5. Check imports for dangerous API usage (VirtualAllocEx, CreateRemoteThread, etc.)\n"
-            "6. Generate a structured report with severity ratings\n\n"
+            "Dynamic Analysis:\n"
+            "- frida_attach(target, script, script_type) — Hook running mobile apps and native binaries\n"
+            "- frida_generate_script(ghidra_functions) — Create Frida scripts from static analysis\n\n"
+            "When conducting a security assessment:\n"
+            "1. Start with reconnaissance (nmap for network, nuclei for web)\n"
+            "2. Identify vulnerabilities (sqlmap for SQLi, nuclei for known CVEs)\n"
+            "3. Analyze binaries if present (ghidra for static, frida for dynamic)\n"
+            "4. Scan containers (trivy for image vulnerabilities)\n"
+            "5. Generate a comprehensive report with findings and remediation\n\n"
             "Always provide:\n"
-            "- Executive summary (what is this binary, what's its purpose)\n"
+            "- Executive summary (what was tested, scope, key findings)\n"
             "- Risk assessment (critical/high/medium/low findings)\n"
             "- IOCs (indicators of compromise for threat intel)\n"
-            "- Recommended actions (further analysis, containment, etc.)\n\n"
+            "- Recommended actions (remediation, further analysis, containment)\n\n"
             "Security guidelines:\n"
             "- Always validate targets are in scope before scanning\n"
             "- Never scan networks without explicit permission\n"
@@ -285,7 +292,7 @@ MODE_CONFIGS: Dict[AgentMode, ModeConfig] = {
             "- Provide CVE references where applicable\n"
             "- When scanning, start with the most attack-surface-exposed code paths\n"
             "- Classify findings by severity and provide concrete remediation steps\n\n"
-            "In addition to network scanning and binary analysis, audit for: "
+            "In addition to the tools above, audit for: "
             "injection flaws, authentication issues, sensitive data exposure, "
             "dependency vulnerabilities, insecure configurations, and misused cryptography."
         ),
@@ -304,12 +311,21 @@ MODE_CONFIGS: Dict[AgentMode, ModeConfig] = {
             "git_log",
             # Network security tools
             "nmap_scan",
+            # Vulnerability scanning
+            "nuclei_scan",
+            # Web application security
+            "sqlmap_scan",
+            # Container security
+            "trivy_scan",
             # Binary analysis (Ghidra MCP)
             "ghidra_analyze",
             "ghidra_decompile",
             "ghidra_get_functions",
             "ghidra_get_strings",
             "ghidra_get_imports",
+            # Dynamic analysis (Frida)
+            "frida_attach",
+            "frida_generate_script",
             # Legacy Ghidra tools (headless)
             "analyze_binary",
             "decompile_function",
@@ -326,8 +342,8 @@ MODE_CONFIGS: Dict[AgentMode, ModeConfig] = {
             "db_disconnect",
         ],
         verification_strategy="security_scan",
-        max_iterations=10,
-        require_human_approval=["execute_command", "nmap_scan"],
+        max_iterations=15,
+        require_human_approval=["execute_command", "nmap_scan", "sqlmap_scan", "frida_attach"],
     ),
     AgentMode.DEVOPS: ModeConfig(
         name="devops",

@@ -30,6 +30,25 @@ Ghidra Binary Analysis endpoints (Phase 3):
     GET  /api/tools/ghidra/analyses         — List all analyses
     WS   /ws/ghidra/{id}                    — Stream analysis progress
 
+Security Tool Arsenal endpoints (Phase 4):
+    POST /api/tools/nuclei                  — Nuclei vulnerability scan
+    GET  /api/tools/nuclei/status           — Check Nuclei availability
+    GET  /api/tools/nuclei/scans            — List Nuclei scans
+    POST /api/tools/sqlmap                  — SQLMap SQL injection test
+    GET  /api/tools/sqlmap/status           — Check SQLMap availability
+    GET  /api/tools/sqlmap/scans            — List SQLMap scans
+    POST /api/tools/trivy                   — Trivy container/filesystem scan
+    GET  /api/tools/trivy/status            — Check Trivy availability
+    GET  /api/tools/trivy/scans             — List Trivy scans
+    POST /api/tools/frida/attach            — Attach Frida to process
+    POST /api/tools/frida/detach            — Detach Frida session
+    GET  /api/tools/frida/processes         — List hookable processes
+    GET  /api/tools/frida/status            — Check Frida availability
+    GET  /api/tools/frida/sessions          — List active sessions
+    POST /api/tools/frida/generate-script   — Generate Frida script from Ghidra
+    WS   /ws/frida/{session_id}             — Stream Frida messages
+    GET  /api/tools/security/status         — Unified security dashboard
+
 Run with:
     uvicorn app:app --host 127.0.0.1 --port 8000 --reload
 """
@@ -3556,3 +3575,602 @@ async def ghidra_list_analyses() -> dict:
             "error": entry.get("error"),
         })
     return {"analyses": analyses, "total": len(analyses)}
+
+
+# ===========================================================================
+# Phase 4: Security Tool Arsenal — Nuclei, SQLMap, Trivy, Frida
+# ===========================================================================
+
+# Security tool instances (lazy-initialised)
+_nuclei_tool: Optional[Any] = None
+_sqlmap_tool: Optional[Any] = None
+_trivy_tool: Optional[Any] = None
+_frida_tool: Optional[Any] = None
+
+# In-memory scan/session stores for Phase 4 tools
+_nuclei_scans: Dict[str, Any] = {}
+_sqlmap_scans: Dict[str, Any] = {}
+_trivy_scans: Dict[str, Any] = {}
+_frida_sessions_store: Dict[str, Any] = {}
+
+
+def _get_nuclei_tool():
+    global _nuclei_tool
+    if _nuclei_tool is None:
+        from tools.nuclei_tool import NucleiTool
+        _nuclei_tool = NucleiTool()
+    return _nuclei_tool
+
+
+def _get_sqlmap_tool():
+    global _sqlmap_tool
+    if _sqlmap_tool is None:
+        from tools.sqlmap_tool import SQLMapTool
+        _sqlmap_tool = SQLMapTool()
+    return _sqlmap_tool
+
+
+def _get_trivy_tool():
+    global _trivy_tool
+    if _trivy_tool is None:
+        from tools.trivy_tool import TrivyTool
+        _trivy_tool = TrivyTool()
+    return _trivy_tool
+
+
+def _get_frida_tool():
+    global _frida_tool
+    if _frida_tool is None:
+        from tools.frida_tool import FridaTool
+        _frida_tool = FridaTool()
+    return _frida_tool
+
+
+# --- Nuclei Request Models ---
+
+class NucleiScanRequest(BaseModel):
+    target: str = Field(..., description="Target URL, IP, or hostname")
+    templates: Optional[List[str]] = Field(None, description="Template categories (cves, vulnerabilities, misconfiguration, exposures)")
+    severity: Optional[List[str]] = Field(None, description="Severity filter (critical, high, medium, low, info)")
+    output_format: str = Field("json", description="Output format: json or markdown")
+    workspace_id: Optional[str] = Field(None, description="Workspace ID")
+    allow_localhost: bool = Field(False, description="Allow scanning localhost")
+    allow_private: bool = Field(True, description="Allow scanning private IPs")
+    timeout: int = Field(300, ge=30, le=600, description="Scan timeout in seconds")
+
+
+# --- SQLMap Request Models ---
+
+class SQLMapScanRequest(BaseModel):
+    target: str = Field(..., description="Target URL with query parameters (e.g., http://example.com/page.php?id=1)")
+    level: int = Field(1, ge=1, le=5, description="Detection level (1-5)")
+    risk: int = Field(1, ge=1, le=3, description="Risk level (1-3)")
+    techniques: str = Field("BEUSTQ", description="Injection techniques to test (B=Boolean, E=Error, U=Union, S=Stacked, T=Time, Q=Inline)")
+    enumerate_db: bool = Field(False, description="Enumerate databases")
+    enumerate_tables: bool = Field(False, description="Enumerate tables")
+    workspace_id: Optional[str] = Field(None, description="Workspace ID")
+    allow_localhost: bool = Field(False, description="Allow scanning localhost")
+    timeout: int = Field(300, ge=30, le=600, description="Scan timeout in seconds")
+
+
+# --- Trivy Request Models ---
+
+class TrivyScanRequest(BaseModel):
+    mode: str = Field(..., description="Scan mode: image, fs, repo, config")
+    target: str = Field(..., description="Target (image name, path, or URL)")
+    severity: Optional[List[str]] = Field(None, description="Severity filter (CRITICAL, HIGH, MEDIUM, LOW)")
+    ignore_unfixed: bool = Field(False, description="Ignore unfixed vulnerabilities")
+    workspace_id: Optional[str] = Field(None, description="Workspace ID")
+    timeout: int = Field(300, ge=30, le=600, description="Scan timeout in seconds")
+
+
+# --- Frida Request Models ---
+
+class FridaAttachRequest(BaseModel):
+    target: str = Field(..., description="Process name or PID to attach to")
+    script: Optional[str] = Field(None, description="Custom JavaScript hook script")
+    script_type: str = Field("custom", description="Script type: custom, ssl_pinning_bypass, root_detection_bypass, crypto_tracer, network_interceptor, file_access_tracer")
+    workspace_id: Optional[str] = Field(None, description="Workspace ID")
+    timeout: int = Field(60, ge=10, le=600, description="Script timeout in seconds")
+
+
+class FridaDetachRequest(BaseModel):
+    session_id: str = Field(..., description="Frida session ID to detach")
+
+
+class FridaGenerateScriptRequest(BaseModel):
+    ghidra_functions: List[dict] = Field(..., description="List of Ghidra function dicts with name and address")
+
+
+# ===========================================================================
+# Nuclei Endpoints
+# ===========================================================================
+
+@app.post("/api/tools/nuclei")
+async def nuclei_scan(req: NucleiScanRequest) -> dict:
+    """Run a Nuclei vulnerability scan against a target.
+
+    Uses 5,000+ community templates to detect known CVEs,
+    misconfigurations, and exposures.
+    """
+    tool = _get_nuclei_tool()
+
+    if not tool.is_available():
+        raise HTTPException(
+            status_code=503,
+            detail="Nuclei is not installed. Install with: go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest",
+        )
+
+    try:
+        result = await tool.scan(
+            target=req.target,
+            templates=req.templates,
+            severity=req.severity,
+            output_format=req.output_format,
+            workspace_id=req.workspace_id,
+            allow_localhost=req.allow_localhost,
+            allow_private=req.allow_private,
+            timeout=req.timeout,
+        )
+        scan_data = result.to_dict()
+        _nuclei_scans[scan_data["scan_id"]] = scan_data
+        return scan_data
+    except Exception as exc:
+        logger.error("Nuclei scan failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/api/tools/nuclei/status")
+async def nuclei_status() -> dict:
+    """Check if Nuclei binary is available and get template info."""
+    tool = _get_nuclei_tool()
+    return {
+        "available": tool.is_available(),
+        "tool": "nuclei",
+    }
+
+
+@app.get("/api/tools/nuclei/scans")
+async def nuclei_list_scans() -> dict:
+    """List all Nuclei scans."""
+    return {"scans": list(_nuclei_scans.values()), "total": len(_nuclei_scans)}
+
+
+@app.get("/api/tools/nuclei/scans/{scan_id}")
+async def nuclei_get_scan(scan_id: str = Path(..., description="Scan ID")) -> dict:
+    """Get a specific Nuclei scan result."""
+    if scan_id not in _nuclei_scans:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    return _nuclei_scans[scan_id]
+
+
+# ===========================================================================
+# SQLMap Endpoints
+# ===========================================================================
+
+@app.post("/api/tools/sqlmap")
+async def sqlmap_scan(req: SQLMapScanRequest) -> dict:
+    """Run a SQLMap SQL injection test against a target URL.
+
+    Detects and exploits SQL injection vulnerabilities with
+    support for multiple techniques (Boolean, Error, Union, Stacked, Time, Inline).
+    """
+    tool = _get_sqlmap_tool()
+
+    if not tool.is_available():
+        raise HTTPException(
+            status_code=503,
+            detail="SQLMap is not installed. Install with: pip install sqlmap or apt install sqlmap",
+        )
+
+    try:
+        result = await tool.scan(
+            target=req.target,
+            level=req.level,
+            risk=req.risk,
+            techniques=req.techniques,
+            enumerate_db=req.enumerate_db,
+            enumerate_tables=req.enumerate_tables,
+            workspace_id=req.workspace_id,
+            allow_localhost=req.allow_localhost,
+            timeout=req.timeout,
+        )
+        scan_data = result.to_dict()
+        _sqlmap_scans[scan_data["scan_id"]] = scan_data
+        return scan_data
+    except Exception as exc:
+        logger.error("SQLMap scan failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/api/tools/sqlmap/status")
+async def sqlmap_status() -> dict:
+    """Check if SQLMap binary is available."""
+    tool = _get_sqlmap_tool()
+    return {
+        "available": tool.is_available(),
+        "tool": "sqlmap",
+    }
+
+
+@app.get("/api/tools/sqlmap/scans")
+async def sqlmap_list_scans() -> dict:
+    """List all SQLMap scans."""
+    return {"scans": list(_sqlmap_scans.values()), "total": len(_sqlmap_scans)}
+
+
+@app.get("/api/tools/sqlmap/scans/{scan_id}")
+async def sqlmap_get_scan(scan_id: str = Path(..., description="Scan ID")) -> dict:
+    """Get a specific SQLMap scan result."""
+    if scan_id not in _sqlmap_scans:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    return _sqlmap_scans[scan_id]
+
+
+# ===========================================================================
+# Trivy Endpoints
+# ===========================================================================
+
+@app.post("/api/tools/trivy")
+async def trivy_scan(req: TrivyScanRequest) -> dict:
+    """Run a Trivy vulnerability scan.
+
+    Scans Docker images, filesystems, Git repos, and IaC configs
+    for known CVEs and misconfigurations.
+    """
+    tool = _get_trivy_tool()
+
+    if not tool.is_available():
+        raise HTTPException(
+            status_code=503,
+            detail="Trivy is not installed. Install with: https://aquasecurity.github.io/trivy/latest/getting-started/installation/",
+        )
+
+    try:
+        result = await tool.scan(
+            mode=req.mode,
+            target=req.target,
+            severity=req.severity,
+            ignore_unfixed=req.ignore_unfixed,
+            workspace_id=req.workspace_id,
+            timeout=req.timeout,
+        )
+        scan_data = result.to_dict()
+        _trivy_scans[scan_data["scan_id"]] = scan_data
+        return scan_data
+    except Exception as exc:
+        logger.error("Trivy scan failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/api/tools/trivy/status")
+async def trivy_status() -> dict:
+    """Check if Trivy binary is available."""
+    tool = _get_trivy_tool()
+    return {
+        "available": tool.is_available(),
+        "tool": "trivy",
+    }
+
+
+@app.get("/api/tools/trivy/scans")
+async def trivy_list_scans() -> dict:
+    """List all Trivy scans."""
+    return {"scans": list(_trivy_scans.values()), "total": len(_trivy_scans)}
+
+
+@app.get("/api/tools/trivy/scans/{scan_id}")
+async def trivy_get_scan(scan_id: str = Path(..., description="Scan ID")) -> dict:
+    """Get a specific Trivy scan result."""
+    if scan_id not in _trivy_scans:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    return _trivy_scans[scan_id]
+
+
+# ===========================================================================
+# Frida Endpoints
+# ===========================================================================
+
+@app.post("/api/tools/frida/attach")
+async def frida_attach(req: FridaAttachRequest) -> dict:
+    """Attach Frida to a running process for dynamic instrumentation.
+
+    Supports custom JavaScript scripts and built-in templates for
+    SSL pinning bypass, root detection bypass, crypto tracing, etc.
+    """
+    tool = _get_frida_tool()
+
+    if not tool.is_available():
+        raise HTTPException(
+            status_code=503,
+            detail="Frida is not installed. Install with: pip install frida-tools",
+        )
+
+    try:
+        session = await tool.attach(
+            target=req.target,
+            script=req.script,
+            script_type=req.script_type,
+            workspace_id=req.workspace_id,
+            timeout=req.timeout,
+        )
+        session_data = session.to_dict()
+        _frida_sessions_store[session.session_id] = session
+        return session_data
+    except Exception as exc:
+        logger.error("Frida attach failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/api/tools/frida/detach")
+async def frida_detach(req: FridaDetachRequest) -> dict:
+    """Detach from a Frida session."""
+    tool = _get_frida_tool()
+
+    success = await tool.detach(req.session_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Session not found or already detached")
+
+    _frida_sessions_store.pop(req.session_id, None)
+    return {"session_id": req.session_id, "status": "detached"}
+
+
+@app.get("/api/tools/frida/processes")
+async def frida_list_processes() -> dict:
+    """List running processes that can be hooked with Frida."""
+    tool = _get_frida_tool()
+
+    if not tool.is_available():
+        raise HTTPException(status_code=503, detail="Frida is not installed")
+
+    try:
+        processes = await tool.list_processes()
+        return {
+            "processes": [p.to_dict() for p in processes],
+            "total": len(processes),
+        }
+    except Exception as exc:
+        logger.error("Frida process list failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/api/tools/frida/status")
+async def frida_status() -> dict:
+    """Check if Frida is available."""
+    tool = _get_frida_tool()
+    return {
+        "available": tool.is_available(),
+        "tool": "frida",
+        "active_sessions": len(_frida_sessions_store),
+    }
+
+
+@app.get("/api/tools/frida/sessions")
+async def frida_list_sessions() -> dict:
+    """List all active Frida sessions."""
+    sessions = []
+    for sid, session in _frida_sessions_store.items():
+        sessions.append({
+            "session_id": sid,
+            "target": session.target,
+            "status": session.status,
+            "script_type": session.script_type,
+            "start_time": session.start_time,
+        })
+    return {"sessions": sessions, "total": len(sessions)}
+
+
+@app.get("/api/tools/frida/sessions/{session_id}/messages")
+async def frida_get_messages(
+    session_id: str = Path(..., description="Session ID"),
+    since: int = 0,
+) -> dict:
+    """Get messages from a Frida session since a given index."""
+    tool = _get_frida_tool()
+
+    if session_id not in _frida_sessions_store:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    try:
+        messages = await tool.get_messages(session_id, since=since)
+        return {
+            "session_id": session_id,
+            "messages": [m.to_dict() for m in messages],
+            "total": len(messages),
+        }
+    except Exception as exc:
+        logger.error("Frida get messages failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/api/tools/frida/generate-script")
+async def frida_generate_script(req: FridaGenerateScriptRequest) -> dict:
+    """Generate a Frida hook script from Ghidra analysis results."""
+    tool = _get_frida_tool()
+
+    try:
+        script = await tool.generate_script(req.ghidra_functions)
+        return {
+            "script": script,
+            "function_count": len(req.ghidra_functions),
+            "script_type": "ghidra_generated",
+        }
+    except Exception as exc:
+        logger.error("Frida script generation failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.websocket("/ws/frida/{session_id}")
+async def frida_websocket(
+    websocket: WebSocket,
+    session_id: str = Path(..., description="Frida session ID"),
+):
+    """Stream real-time Frida messages via WebSocket."""
+    await websocket.accept()
+    tool = _get_frida_tool()
+
+    if session_id not in _frida_sessions_store:
+        await websocket.send_json({"type": "error", "message": "Session not found"})
+        await websocket.close()
+        return
+
+    try:
+        last_index = 0
+        idle_ticks = 0
+        MAX_IDLE = 200  # 10 seconds idle
+
+        while True:
+            messages = await tool.get_messages(session_id, since=last_index)
+            if messages:
+                for msg in messages:
+                    await websocket.send_json(msg.to_dict())
+                last_index += len(messages)
+                idle_ticks = 0
+            else:
+                idle_ticks += 1
+
+            # Check if session is still active
+            session = _frida_sessions_store.get(session_id)
+            if session is None or session.status in ("detached", "error"):
+                await websocket.send_json({
+                    "type": "session_ended",
+                    "status": session.status if session else "unknown",
+                })
+                break
+
+            if idle_ticks >= MAX_IDLE:
+                await websocket.send_json({
+                    "type": "stream_timeout",
+                    "message": "Stream idle timeout (10s)",
+                })
+                break
+
+            await asyncio.sleep(0.05)  # 50ms = 20 updates/sec
+
+    except WebSocketDisconnect:
+        logger.debug("WebSocket disconnected for Frida session %s", session_id)
+    except Exception as exc:
+        logger.error("WebSocket error for Frida session %s: %s", session_id, exc)
+        try:
+            await websocket.send_json({"type": "error", "message": str(exc)})
+        except Exception:
+            pass
+    finally:
+        try:
+            await websocket.close()
+        except Exception:
+            pass
+
+
+# ===========================================================================
+# Security Dashboard — Unified status endpoint
+# ===========================================================================
+
+@app.get("/api/tools/security/status")
+async def security_dashboard_status() -> dict:
+    """Get unified security tool status for the dashboard.
+
+    Returns availability and active scan counts for all security tools:
+    nmap, nuclei, sqlmap, trivy, ghidra, frida.
+    """
+    tools_status = {}
+
+    # Nmap
+    try:
+        from tools.nmap_tool import NmapTool
+        nmap = NmapTool()
+        tools_status["nmap"] = {"available": nmap.is_available(), "active_scans": 0}
+    except Exception:
+        tools_status["nmap"] = {"available": False, "active_scans": 0}
+
+    # Nuclei
+    try:
+        nuclei = _get_nuclei_tool()
+        tools_status["nuclei"] = {
+            "available": nuclei.is_available(),
+            "active_scans": sum(1 for s in _nuclei_scans.values() if s.get("status") == "running"),
+        }
+    except Exception:
+        tools_status["nuclei"] = {"available": False, "active_scans": 0}
+
+    # SQLMap
+    try:
+        sqlmap = _get_sqlmap_tool()
+        tools_status["sqlmap"] = {
+            "available": sqlmap.is_available(),
+            "active_scans": sum(1 for s in _sqlmap_scans.values() if s.get("status") == "running"),
+        }
+    except Exception:
+        tools_status["sqlmap"] = {"available": False, "active_scans": 0}
+
+    # Trivy
+    try:
+        trivy = _get_trivy_tool()
+        tools_status["trivy"] = {
+            "available": trivy.is_available(),
+            "active_scans": sum(1 for s in _trivy_scans.values() if s.get("status") == "running"),
+        }
+    except Exception:
+        tools_status["trivy"] = {"available": False, "active_scans": 0}
+
+    # Ghidra
+    tools_status["ghidra"] = {
+        "available": _ghidra_client is not None and _ghidra_client.is_connected(),
+        "active_analyses": sum(1 for a in _ghidra_analyses.values() if a.get("status") == "in_progress"),
+    }
+
+    # Frida
+    try:
+        frida = _get_frida_tool()
+        tools_status["frida"] = {
+            "available": frida.is_available(),
+            "active_sessions": len(_frida_sessions_store),
+        }
+    except Exception:
+        tools_status["frida"] = {"available": False, "active_sessions": 0}
+
+    # Aggregate recent findings
+    recent_findings = []
+
+    # From Nuclei
+    for scan in list(_nuclei_scans.values())[:5]:
+        for finding in scan.get("findings", []):
+            recent_findings.append({
+                "source": "nuclei",
+                "severity": finding.get("severity", "info"),
+                "description": finding.get("template_name", finding.get("description", "")),
+                "target": scan.get("target", ""),
+                "timestamp": finding.get("timestamp", 0),
+            })
+
+    # From SQLMap
+    for scan in list(_sqlmap_scans.values())[:5]:
+        for injection in scan.get("injections", []):
+            recent_findings.append({
+                "source": "sqlmap",
+                "severity": "critical" if injection.get("risk", 1) >= 3 else "high",
+                "description": f"SQL Injection: {injection.get('injection_type', 'Unknown')}",
+                "target": scan.get("target", ""),
+                "timestamp": 0,
+            })
+
+    # From Trivy
+    for scan in list(_trivy_scans.values())[:5]:
+        for vuln in scan.get("vulnerabilities", []):
+            recent_findings.append({
+                "source": "trivy",
+                "severity": vuln.get("severity", "unknown").lower(),
+                "description": f"{vuln.get('vulnerability_id', 'N/A')}: {vuln.get('pkg_name', '')} {vuln.get('installed_version', '')}",
+                "target": scan.get("target", ""),
+                "timestamp": 0,
+            })
+
+    # Sort findings by severity
+    severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+    recent_findings.sort(key=lambda f: severity_order.get(f.get("severity", "info"), 5))
+
+    return {
+        "tools": tools_status,
+        "recent_findings": recent_findings[:20],
+        "total_findings": len(recent_findings),
+    }

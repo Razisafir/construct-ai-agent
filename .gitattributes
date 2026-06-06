@@ -26,8 +26,11 @@
 *.ttf binary
 *.eot binary
 *.icns binary
-*.exe binary
-*.AppImage binary
-*.dmg binary
-*.deb binary
-*.rpm binary
+
+# Git LFS — track large model/binary files that MUST be versioned
+*.onnx filter=lfs diff=lfs merge=lfs -text
+*.pt filter=lfs diff=lfs merge=lfs -text
+*.pth filter=lfs diff=lfs merge=lfs -text
+*.bin filter=lfs diff=lfs merge=lfs -text
+test-binaries/*.exe filter=lfs diff=lfs merge=lfs -text
+test-binaries/*.dll filter=lfs diff=lfs merge=lfs -text

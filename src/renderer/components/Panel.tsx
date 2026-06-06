@@ -13,6 +13,10 @@ const GhidraPanel = lazy(() =>
   import("./GhidraPanel").then((m) => ({ default: m.default }))
 );
 
+const SecurityDashboard = lazy(() =>
+  import("./SecurityDashboard").then((m) => ({ default: m.default }))
+);
+
 interface Tab {
   id: string;
   icon: string;
@@ -31,6 +35,7 @@ function Panel() {
     { id: "terminal", icon: "terminal", label: "Terminal" },
     { id: "security", icon: "shield", label: "Security" },
     { id: "ghidra", icon: "psychology", label: "Ghidra" },
+    { id: "security-dash", icon: "security", label: "Sec Dashboard" },
     { id: "ports", icon: "lan", label: "Ports" },
   ];
 
@@ -78,6 +83,18 @@ function Panel() {
             }
           >
             <GhidraPanel />
+          </Suspense>
+        );
+      case "security-dash":
+        return (
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center h-full font-mono text-[11px] text-text-secondary">
+                loading security dashboard...
+              </div>
+            }
+          >
+            <SecurityDashboard />
           </Suspense>
         );
       case "problems": return renderPlaceholder("Problems", "warning");
