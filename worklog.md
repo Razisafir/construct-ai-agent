@@ -154,3 +154,39 @@ Stage Summary:
 - Patch file saved for manual application
 - Ghidra MCP client NOT tested against real MCP server (no Docker runtime)
 - Multi-agent module is foundation only (not wired to UI)
+
+---
+Task ID: phase4-all
+Agent: main
+Task: Phase 4: Repo Cleanup + Security Tool Arsenal (Nuclei, SQLMap, Trivy, Frida)
+
+Work Log:
+- Part 1: Repo Cleanup
+  - Updated .gitignore with comprehensive rules (build artifacts, /download/, /local-sysdeps/, upload/, large JSON)
+  - Installed git-filter-repo, ran --strip-blobs-bigger-than 50M then 10M
+  - Removed download/, local-sysdeps/, upload/ directories from git history entirely
+  - Removed 21 large JSON audit files from history (actions_runs.json, etc.)
+  - Updated .gitattributes with Git LFS tracking for model/binary files
+  - Created scripts/pre-commit-large-files.sh (blocks files >50MB)
+  - Installed hook to .git/hooks/pre-commit
+  - Force push to main: SUCCEEDED
+  - Pushed feat/phase2-security-tools and feat/phase3-ghidra-integration branches
+- Part 2: Phase 4 Security Tools
+  - Created nuclei_tool.py (774 lines) — Nuclei vulnerability scanner with JSONL parsing, target validation, rate limiting
+  - Created sqlmap_tool.py (740 lines) — SQLMap SQL injection with 6 techniques, blocked dangerous flags, DB enumeration
+  - Created trivy_tool.py (480 lines) — Trivy container/filesystem/repo/config scanner with CVE detection
+  - Created frida_tool.py (1185 lines) — Frida dynamic instrumentation with 5 script templates, process management
+  - Updated SECURITY mode in modes.py: 31 tools, 4 require human approval (execute_command, nmap_scan, sqlmap_scan, frida_attach)
+  - Added 20+ API endpoints to app.py (nuclei, sqlmap, trivy, frida, security dashboard, WebSocket)
+  - Created SecurityDashboard.tsx (676 lines) — Unified dashboard with quick actions, tool status, findings
+  - Updated Panel.tsx with Sec Dashboard tab
+  - Verified: TypeScript 0 errors, Python imports pass, app.py syntax OK
+  - Committed as b2c74a2 on feat/phase4-security-arsenal
+  - Pushed to GitHub: SUCCEEDED on both feat branch and main
+
+Stage Summary:
+- 10 files changed, 4550 insertions
+- Repo history cleaned: largest blob now 1.2MB (was 179MB)
+- 6 security tools integrated (Nmap, Nuclei, SQLMap, Trivy, Ghidra, Frida)
+- Git push works reliably after cleanup
+- Session report: /home/z/my-project/download/PHASE4_SESSION_REPORT.md
