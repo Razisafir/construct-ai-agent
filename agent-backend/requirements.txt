@@ -29,7 +29,7 @@ aiohttp==3.11.11
 astor==0.8.1
 
 # System monitoring
-psutil==6.1.1
+psutil==7.2.2
 
 # Task scheduling
 schedule==1.2.2
