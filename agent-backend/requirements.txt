@@ -23,7 +23,7 @@ anthropic==0.42.0
 google-generativeai==0.8.3
 
 # Async HTTP
-aiohttp==3.11.11
+aiohttp==3.14.0
 
 # Code Analysis
 astor==0.8.1
